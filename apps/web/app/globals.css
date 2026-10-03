@@ -855,3 +855,256 @@ html, body {
 @media (max-width: 760px) {
   .themeSwitcher { margin-bottom: 6px; }
 }
+
+
+/* Handwriting-first notebook workspace */
+.notebookChrome {
+  min-height: 58px;
+  padding: 8px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 31;
+}
+.notebookIdentity {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 10px;
+}
+.notebookEmoji {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--surface-soft);
+  font-size: 19px;
+}
+.chromeNotebookName {
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 14px;
+  line-height: 1.2;
+}
+.chromePageName {
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 3px;
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chromeActions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.chromeButton {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-soft);
+  border-radius: 9px;
+  padding: 7px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+.chromeButton:hover { background: var(--surface-hover); }
+
+.handwritingToolbar {
+  top: 58px;
+  min-height: 58px;
+  padding: 8px 16px;
+  background: var(--topbar);
+  box-shadow: 0 5px 18px var(--shadow);
+}
+.primaryTools { flex: 1; }
+.secondaryTools { justify-content: flex-end; }
+.writingTool {
+  min-width: 58px;
+  min-height: 42px;
+  padding: 5px 9px;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1px;
+}
+.toolIcon {
+  font-size: 19px;
+  line-height: 18px;
+  font-weight: 800;
+}
+.toolLabel {
+  font-size: 9px;
+  line-height: 12px;
+  font-weight: 750;
+}
+.writingTool.active {
+  background: var(--accentSoft);
+  color: var(--accent-text);
+  border-color: var(--line-strong);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+.iconOnly {
+  min-width: 38px;
+  font-size: 20px;
+  line-height: 1;
+}
+.toolbarDivider {
+  width: 1px;
+  height: 30px;
+  background: var(--line);
+  margin: 0 2px;
+}
+.inkColorControl {
+  border-radius: 999px;
+  width: 34px;
+  height: 34px;
+}
+.inkColorControl input {
+  width: 38px;
+  height: 38px;
+}
+.strokeControl {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--input);
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+}
+.strokeControl input {
+  width: 78px;
+  accent-color: var(--accent);
+}
+
+.documentWrap {
+  padding: 22px 28px 54px;
+  background:
+    radial-gradient(circle at 50% 0, color-mix(in srgb, var(--accent) 5%, transparent), transparent 42%),
+    var(--bg);
+}
+.document {
+  width: min(840px, 100%);
+  min-height: 1176px;
+  border-radius: 4px;
+  box-shadow: 0 10px 34px var(--shadow), 0 1px 3px var(--shadow);
+}
+.pageBody,
+.inkSurface,
+.inkCanvas {
+  min-height: 1176px;
+}
+.editor {
+  min-height: 1176px;
+  padding: 52px 62px 78px;
+  font-size: 16px;
+  line-height: 2;
+}
+.pageDetailsSheet {
+  margin: 18px 18px 0;
+  padding: 20px 28px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--paper) 96%, transparent);
+  box-shadow: 0 8px 24px var(--shadow);
+}
+.pageDetailsSheet + .pageBody,
+.pageDetailsSheet + .pageBody .inkSurface,
+.pageDetailsSheet + .pageBody .inkCanvas,
+.pageDetailsSheet + .pageBody .editor {
+  min-height: 960px;
+}
+.pageDetailsSheet .titleInput { font-size: 25px; }
+.pageDetailsSheet .subjectInput { padding-top: 3px; }
+
+/* Page rail: visually scan pages like sheets instead of text files. */
+.sidebar .pageList { gap: 7px; }
+.sidebar .pageCard {
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 9px;
+  align-items: center;
+  padding: 7px 8px;
+}
+.sidebar .pageCard::before {
+  content: "";
+  grid-row: 1 / 3;
+  width: 32px;
+  height: 42px;
+  border-radius: 3px;
+  border: 1px solid var(--line-strong);
+  background:
+    repeating-linear-gradient(to bottom, transparent 0, transparent 7px, var(--paper-line) 8px),
+    var(--paper);
+  box-shadow: 0 2px 6px var(--shadow);
+}
+.sidebar .pageCard.active::before {
+  border: 2px solid var(--accent);
+}
+.sidebar .pageTitle,
+.sidebar .pageMeta {
+  grid-column: 2;
+}
+.sidebar .pageTitle { align-self: end; }
+.sidebar .pageMeta { align-self: start; }
+
+/* Make drawing the obvious default interaction. */
+.inkCanvas.enabled {
+  cursor: crosshair;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.inkCanvas.tool-pen { cursor: crosshair; }
+.inkCanvas.tool-highlighter { cursor: crosshair; }
+.inkCanvas.tool-eraser { cursor: cell; }
+
+@media (pointer: coarse) {
+  .tool, .paperSelect, .chromeButton { min-height: 42px; }
+  .writingTool { min-width: 64px; min-height: 48px; }
+  .handwritingToolbar { min-height: 66px; }
+  .strokeControl { height: 42px; }
+}
+
+@media (max-width: 1120px) {
+  .handwritingToolbar { overflow-x: auto; }
+  .handwritingToolbar .toolGroup { flex-wrap: nowrap; }
+  .strokeControl span { display: none; }
+  .strokeControl input { width: 62px; }
+  .secondaryTools .tool:not(.favoriteButton), .secondaryTools .paperSelect { white-space: nowrap; }
+}
+
+@media (max-width: 760px) {
+  .notebookChrome { min-height: 54px; padding: 7px 10px; }
+  .chromeActions .saveState, .chromeActions .chromeButton:first-of-type { display: none; }
+  .handwritingToolbar { top: 54px; padding: 6px 8px; min-height: 60px; }
+  .toolLabel { display: none; }
+  .writingTool { min-width: 44px; min-height: 42px; }
+  .strokeControl { display: none; }
+  .secondaryTools { display: none; }
+  .documentWrap { padding: 10px 8px 32px; }
+  .document {
+    width: 100%;
+    min-height: calc(100vh - 124px);
+    border-radius: 2px;
+  }
+  .pageBody, .inkSurface, .inkCanvas, .editor {
+    min-height: calc(100vh - 124px);
+  }
+  .editor { padding: 34px 28px 60px; }
+}
