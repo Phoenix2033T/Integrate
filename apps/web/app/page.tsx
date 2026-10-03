@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import InkCanvas from "../components/InkCanvas";
+import { strokesToSvgDataUrl } from "../lib/ink";
 import type {
   AiScope,
   IntegrateWorkspace,
@@ -24,6 +25,7 @@ function normalizePage(page: Partial<Page> & { id?: string }): Page {
     title: page.title || "Untitled Page",
     subject: page.subject || "General",
     body: page.body || "",
+    recognizedInk: page.recognizedInk || "",
     paper: page.paper || "lined",
     strokes: page.strokes || [],
     tags: page.tags || [],
@@ -178,9 +180,17 @@ export default function Home() {
   const [aiError, setAiError] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiAction, setAiAction] = useState("");
+  const [recognitionLoading, setRecognitionLoading] = useState(false);
+  const [recognitionError, setRecognitionError] = useState("");
+  const [mathOpen, setMathOpen] = useState(false);
+  const [mathBefore, setMathBefore] = useState("");
+  const [mathAfter, setMathAfter] = useState("");
+  const [mathResult, setMathResult] = useState<{ equivalent: boolean; confidence: string; reason: string } | null>(null);
+  const [mathError, setMathError] = useState("");
 
   const editorRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const workspaceImportRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const loaded = loadWorkspace();
@@ -397,8 +407,9 @@ export default function Home() {
         `SUBJECT: ${page.subject}`,
         page.tags.length ? `TAGS: ${page.tags.join(", ")}` : "",
         page.body,
-        page.strokes.length
-          ? `[This page also contains ${page.strokes.length} handwritten/drawn ink strokes that are not yet OCR-transcribed.]`
+        page.recognizedInk ? `RECOGNIZED HANDWRITING:\n${page.recognizedInk}` : "",
+        page.strokes.length && !page.recognizedInk
+          ? `[This page also contains ${page.strokes.length} handwritten/drawn ink strokes that have not been transcribed yet.]`
           : "",
         page.attachments.length
           ? `ATTACHMENTS: ${page.attachments.map((attachment) => attachment.name).join(", ")}`
@@ -464,6 +475,101 @@ export default function Home() {
     };
     setAiPrompt(prompts[action]);
     void askAi(prompts[action], action);
+  }
+
+  async function recognizeInk() {
+    if (!selectedPage || selectedPage.strokes.length === 0) return;
+    setRecognitionLoading(true);
+    setRecognitionError("");
+    try {
+      const response = await fetch("/api/recognize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageDataUrl: strokesToSvgDataUrl(selectedPage.strokes),
+          subject: selectedPage.subject
+        })
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Recognition failed.");
+      patchPage({ recognizedInk: payload.text });
+    } catch (error) {
+      setRecognitionError(error instanceof Error ? error.message : "Recognition failed.");
+    } finally {
+      setRecognitionLoading(false);
+    }
+  }
+
+  async function checkMath() {
+    setMathError("");
+    setMathResult(null);
+    if (!mathBefore.trim() || !mathAfter.trim()) return;
+    try {
+      const response = await fetch("/api/math/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ before: mathBefore, after: mathAfter })
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Math check failed.");
+      setMathResult(payload);
+    } catch (error) {
+      setMathError(error instanceof Error ? error.message : "Math check failed.");
+    }
+  }
+
+  function downloadWorkspace() {
+    const blob = new Blob([JSON.stringify(workspace, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `integrate-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importWorkspace(file: File | undefined) {
+    if (!file) return;
+    try {
+      const parsed = JSON.parse(await file.text()) as Partial<IntegrateWorkspace>;
+      if (!Array.isArray(parsed.notebooks)) throw new Error("This is not an Integrate workspace backup.");
+      const notebooks: Notebook[] = parsed.notebooks.map((notebook: any) => ({
+        id: typeof notebook.id === "string" ? notebook.id : crypto.randomUUID(),
+        title: typeof notebook.title === "string" ? notebook.title : "Imported Notebook",
+        emoji: typeof notebook.emoji === "string" ? notebook.emoji : "📓",
+        folder: typeof notebook.folder === "string" ? notebook.folder : "Imported",
+        pages: Array.isArray(notebook.pages) ? notebook.pages.map(normalizePage) : [makePage()]
+      }));
+      if (notebooks.length === 0) throw new Error("The backup contains no notebooks.");
+      const next: IntegrateWorkspace = { version: 3, notebooks };
+      setWorkspace(next);
+      setSelectedNotebookId(notebooks[0].id);
+      setSelectedPageId(notebooks[0].pages[0]?.id ?? "");
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Could not import this backup.");
+    } finally {
+      if (workspaceImportRef.current) workspaceImportRef.current.value = "";
+    }
+  }
+
+  function downloadMarkdown() {
+    if (!selectedPage) return;
+    const sections = [
+      `# ${selectedPage.title}`,
+      "",
+      `**Subject:** ${selectedPage.subject}`,
+      selectedPage.tags.length ? `**Tags:** ${selectedPage.tags.map((tag) => `#${tag}`).join(" ")}` : "",
+      "",
+      selectedPage.body,
+      selectedPage.recognizedInk ? `\n## Recognized handwriting\n\n${selectedPage.recognizedInk}` : ""
+    ].filter(Boolean);
+    const blob = new Blob([sections.join("\n")], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${(selectedPage.title || "note").replace(/[^a-z0-9-_]+/gi, "-")}.md`;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   function formatSelection(prefix: string, suffix = prefix, fallback = "text") {
@@ -631,6 +737,10 @@ export default function Home() {
                   </label>
                 )}
                 <button className="tool" onClick={() => patchPage({ strokes: selectedPage.strokes.slice(0, -1) })} disabled={!selectedPage.strokes.length}>Undo ink</button>
+                <button className="tool" onClick={() => void recognizeInk()} disabled={!selectedPage.strokes.length || recognitionLoading}>
+                  {recognitionLoading ? "Reading…" : "Recognize ink"}
+                </button>
+                <button className={`tool ${mathOpen ? "active" : ""}`} onClick={() => { setMathOpen((value) => !value); setAiOpen(true); }}>Math check</button>
               </div>
 
               <div className="toolGroup">
@@ -638,6 +748,10 @@ export default function Home() {
                 <button className={`tool favoriteButton ${selectedPage.favorite ? "favorite" : ""}`} onClick={() => patchPage({ favorite: !selectedPage.favorite })}>★</button>
                 <button className="tool" onClick={() => fileInputRef.current?.click()}>Attach</button>
                 <input ref={fileInputRef} className="hiddenInput" type="file" multiple accept="image/*,application/pdf" onChange={(event) => void addAttachments(event.target.files)} />
+                <button className="tool" onClick={downloadMarkdown}>Export MD</button>
+                <button className="tool" onClick={downloadWorkspace}>Backup</button>
+                <button className="tool" onClick={() => workspaceImportRef.current?.click()}>Import</button>
+                <input ref={workspaceImportRef} className="hiddenInput" type="file" accept="application/json,.json" onChange={(event) => void importWorkspace(event.target.files?.[0])} />
                 <select className="paperSelect" value={selectedPage.paper} onChange={(event) => patchPage({ paper: event.target.value as PaperStyle })}>
                   <option value="blank">Blank</option>
                   <option value="lined">Lined</option>
@@ -673,6 +787,20 @@ export default function Home() {
                       onBlur={addTag}
                     />
                   </div>
+
+                  {recognitionError && <div className="recognitionError">{recognitionError}</div>}
+                  {selectedPage.recognizedInk && (
+                    <div className="recognizedInkCard">
+                      <div className="recognizedInkHeader">
+                        <strong>Recognized handwriting</strong>
+                        <div>
+                          <button onClick={() => patchPage({ body: [selectedPage.body, selectedPage.recognizedInk].filter(Boolean).join("\n\n") })}>Add to note</button>
+                          <button onClick={() => patchPage({ recognizedInk: "" })}>Clear</button>
+                        </div>
+                      </div>
+                      <pre>{selectedPage.recognizedInk}</pre>
+                    </div>
+                  )}
 
                   {selectedPage.attachments.length > 0 && (
                     <div className="attachmentGrid">
@@ -750,6 +878,26 @@ export default function Home() {
               </button>
             ))}
           </div>
+
+          {mathOpen && (
+            <div className="mathChecker">
+              <div className="mathCheckerHeader">
+                <strong>Symbolic step checker</strong>
+                <button className="iconButton smallClose" onClick={() => setMathOpen(false)}>×</button>
+              </div>
+              <input value={mathBefore} onChange={(event) => setMathBefore(event.target.value)} placeholder="Previous line, e.g. 2x + 4 = 10" />
+              <input value={mathAfter} onChange={(event) => setMathAfter(event.target.value)} placeholder="Next line, e.g. x + 2 = 5" />
+              <button className="primary" onClick={() => void checkMath()} disabled={!mathBefore.trim() || !mathAfter.trim()}>Check step</button>
+              {mathError && <div className="aiError">{mathError}</div>}
+              {mathResult && (
+                <div className={`mathResult ${mathResult.equivalent ? "correct" : "incorrect"}`}>
+                  <strong>{mathResult.equivalent ? "Equivalent step" : "Not verified"}</strong>
+                  <span>{mathResult.reason}</span>
+                  <small>Confidence: {mathResult.confidence}</small>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="aiSuggestionGrid">
             {["Summarize", "Quiz me", "Explain", "Find gaps", "Study guide", "Flashcards"].map((label) => (
