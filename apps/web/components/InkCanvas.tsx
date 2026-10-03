@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { InkPoint, InkStroke, PaperStyle } from "../lib/types";
+import { createId } from "../lib/id";
 
 type Tool = "pen" | "highlighter" | "eraser";
 
@@ -42,7 +43,7 @@ export default function InkCanvas({ strokes, onChange, tool, color, paper, enabl
     event.currentTarget.setPointerCapture(event.pointerId);
     const highlighter = tool === "highlighter";
     setDraft({
-      id: crypto.randomUUID(),
+      id: createId(),
       tool: highlighter ? "highlighter" : "pen",
       color,
       width: width ?? (highlighter ? 22 : 3.4),
