@@ -20,6 +20,7 @@ type Tool =
   | "fountain"
   | "ballpoint"
   | "pencil"
+  | "brush"
   | "highlighter"
   | "eraser"
   | "lasso"
@@ -36,6 +37,12 @@ type Tool =
 const STORAGE_KEY = "integrate.workspace.v4";
 const V3_KEY = "integrate.workspace.v3";
 const THEME_KEY = "integrate.theme";
+const PEN_SETTINGS_KEY = "integrate.pen-settings.v1";
+type PenSetting = "tipSharpness" | "pressureSensitivity" | "tipFlatness" | "stabilization";
+type PenSettings = Record<PenSetting, number>;
+const DEFAULT_PEN_SETTINGS: PenSettings = {
+  tipSharpness: 75, pressureSensitivity: 75, tipFlatness: 33, stabilization: 35
+};
 
 function normalizePage(page: Partial<Page> & { id?: string }): Page {
   return {
@@ -160,6 +167,7 @@ function toolLabel(tool: Tool) {
     fountain: "Fountain",
     ballpoint: "Ballpoint",
     pencil: "Pencil",
+    brush: "Brush",
     highlighter: "Highlighter",
     eraser: "Eraser",
     lasso: "Lasso",
@@ -196,6 +204,7 @@ function ToolIcon({ name }: { name: IconName }) {
     fountain: <><path d="m5 19 4.5-1.2 9-9a2 2 0 0 0-2.8-2.8l-9 9L5 19Z"/><path d="m13.5 8 2.5 2.5"/><path d="m7 16 2 2"/></>,
     ballpoint: <><path d="M5 19 8.5 18 19 7.5 16.5 5 6 15.5 5 19Z"/><path d="m14.5 7 2.5 2.5"/></>,
     pencil: <><path d="m4 20 4.2-1.1L19 8.1 15.9 5 5.1 15.8 4 20Z"/><path d="m13.9 7 3.1 3.1"/><path d="M4 20l3.1-.8-2.3-2.3L4 20Z"/></>,
+    brush: <><path d="M15 3c2.8 1.4 4.5 3.6 3.5 5.5L10 17l-3-3 8-11Z"/><path d="M9 16c.2 2.9-1.9 4.6-5.5 4.5 1.7-1.1 1.2-3.3 3.5-5.1L9 16Z"/></>,
     highlighter: <><path d="m6 15 8.8-8.8 3 3L9 18H6v-3Z"/><path d="M4 20h10"/><path d="m13.5 7.5 3 3"/></>,
     eraser: <><path d="m4.5 15.5 8.7-8.7a2 2 0 0 1 2.8 0l2 2a2 2 0 0 1 0 2.8L10.6 19H8.1l-3.6-3.5Z"/><path d="m11 9 5 5"/><path d="M10.5 19H20"/></>,
     lasso: <><path d="M18.5 6.5c2.6 2.7 1.4 7.2-2.5 9.1-4.1 2-9.6.8-11-2.3-1.5-3.2 1.8-6.7 6.2-7.3 2.8-.4 5.5.3 7.3 1.8"/><path d="M12 16c-.2 2.7 1.3 4 3.6 3.5"/></>,
@@ -219,7 +228,7 @@ function ToolIcon({ name }: { name: IconName }) {
 }
 
 function toolGroup(tool: Tool) {
-  if (["fountain", "ballpoint", "pencil"].includes(tool)) return "pen";
+  if (["fountain", "ballpoint", "pencil", "brush"].includes(tool)) return "pen";
   if (["image", "tape", "elements"].includes(tool)) return "insert";
   if (["ruler", "laser"].includes(tool)) return "more";
   return tool;
@@ -244,6 +253,8 @@ export default function Home() {
   const [tool, setTool] = useState<Tool>("ballpoint");
   const [inkColor, setInkColor] = useState("#1f2937");
   const [inkWidth, setInkWidth] = useState(3.4);
+  const [penSettingsOpen, setPenSettingsOpen] = useState(false);
+  const [penSettings, setPenSettings] = useState<PenSettings>(DEFAULT_PEN_SETTINGS);
   const [redoStrokes, setRedoStrokes] = useState<Page["strokes"]>([]);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [folderEditorId, setFolderEditorId] = useState<string | null>(null);
@@ -263,6 +274,20 @@ export default function Home() {
     const initialTheme: ThemeMode = savedTheme === "dark" ? "dark" : "light";
     setTheme(initialTheme);
     document.documentElement.dataset.theme = initialTheme;
+    if (initialTheme === "dark") setInkColor("#eaf6ff");
+    try {
+      const savedPen = window.localStorage.getItem(PEN_SETTINGS_KEY);
+      if (savedPen) {
+        const parsed = JSON.parse(savedPen) as { settings?: Partial<PenSettings>; style?: Tool };
+        const restored = { ...DEFAULT_PEN_SETTINGS };
+        for (const key of Object.keys(restored) as PenSetting[]) {
+          const value = parsed.settings?.[key];
+          if (typeof value === "number" && Number.isFinite(value)) restored[key] = Math.max(0, Math.min(100, value));
+        }
+        setPenSettings(restored);
+        if (parsed.style && ["fountain", "ballpoint", "brush", "pencil"].includes(parsed.style)) setTool(parsed.style);
+      }
+    } catch { /* Ignore invalid saved preferences. */ }
 
     const loaded = loadWorkspace();
     setWorkspace(loaded);
@@ -278,6 +303,19 @@ export default function Home() {
     document.documentElement.dataset.theme = theme;
     if (hydrated) window.localStorage.setItem(THEME_KEY, theme);
   }, [theme, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    window.localStorage.setItem(PEN_SETTINGS_KEY, JSON.stringify({
+      settings: penSettings,
+      style: toolGroup(tool) === "pen" ? tool : "ballpoint"
+    }));
+  }, [penSettings, tool, hydrated]);
+
+  useEffect(() => {
+    if (theme === "dark" && inkColor === "#1f2937") setInkColor("#eaf6ff");
+    if (theme === "light" && inkColor === "#eaf6ff") setInkColor("#1f2937");
+  }, [theme, inkColor]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -460,11 +498,17 @@ export default function Home() {
 
   function selectTool(next: Tool) {
     setTool(next);
+    if (toolGroup(next) !== "pen") setPenSettingsOpen(false);
     if (next === "fountain") setInkWidth(4.2);
     if (next === "ballpoint") setInkWidth(3.4);
     if (next === "pencil") setInkWidth(2.4);
+    if (next === "brush") setInkWidth(6.5);
     if (next === "highlighter") setInkWidth(22);
     if (next === "image") fileInputRef.current?.click();
+  }
+
+  function updatePenSetting(key: PenSetting, value: number) {
+    setPenSettings((current) => ({ ...current, [key]: value }));
   }
 
   function undoInk() {
@@ -744,8 +788,11 @@ export default function Home() {
           <>
             <div className="floatingToolDock nestedDock" role="toolbar" aria-label="Notebook tools">
               <div className="primaryToolRow">
-                <button className={`modernTool ${toolGroup(tool) === "pen" ? "active" : ""}`} onClick={() => selectTool("ballpoint")} title="Pen">
-                  <ToolIcon name="pen" /><span>Pen</span>
+                <button className={`modernTool ${toolGroup(tool) === "pen" ? "active" : ""}`} onClick={() => {
+                  if (toolGroup(tool) !== "pen") selectTool("ballpoint");
+                  setPenSettingsOpen((open) => !open);
+                }} title="Pen settings" aria-expanded={penSettingsOpen} aria-haspopup="dialog">
+                  <ToolIcon name="pen" /><span>Pen⌄</span>
                 </button>
                 <button className={`modernTool ${tool === "highlighter" ? "active" : ""}`} onClick={() => selectTool("highlighter")} title="Highlighter">
                   <ToolIcon name="highlighter" /><span>Highlighter</span>
@@ -779,19 +826,81 @@ export default function Home() {
                 <button className="utilityTool" onClick={redoInk} disabled={!redoStrokes.length} title="Redo"><ToolIcon name="redo" /></button>
               </div>
 
+              {penSettingsOpen && (
+                <section className="penSettingsPopover" role="dialog" aria-label="Pen settings"
+                  onKeyDown={(event) => { if (event.key === "Escape") setPenSettingsOpen(false); }}>
+                  <div className="penPopoverHeader">
+                    <strong>Pen settings</strong>
+                    <button onClick={() => setPenSettingsOpen(false)} aria-label="Close pen settings">×</button>
+                  </div>
+                  <div className="penStyleChoices" role="group" aria-label="Pen style">
+                    {(["fountain", "ballpoint", "brush"] as Tool[]).map((name) => (
+                      <button key={name} className={tool === name ? "active" : ""} onClick={() => selectTool(name)}>
+                        <ToolIcon name={name} />
+                        <span>{name === "fountain" ? "Fountain pen" : name === "ballpoint" ? "Ball pen" : "Brush pen"}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="penSliderGroup">
+                    {([
+                      ["tipSharpness", "Tip sharpness"],
+                      ["pressureSensitivity", "Pressure sensitivity"],
+                      ["tipFlatness", "Tip flatness"],
+                      ["stabilization", "Stroke stabilization"]
+                    ] as [PenSetting, string][]).map(([key, label]) => (
+                      <label className="penSlider" key={key}>
+                        <span><strong>{label}</strong><output>{penSettings[key]}%</output></span>
+                        <input type="range" min={0} max={100} step={1} value={penSettings[key]}
+                          onChange={(event) => updatePenSetting(key, Number(event.target.value))} />
+                      </label>
+                    ))}
+                    <p className="penSettingsHint">Pressure and nib shape affect fountain and brush strokes. Pressure requires a compatible stylus; stabilization also works with touch or a mouse.</p>
+                  </div>
+                  <div className="penPopoverSection">
+                    <strong>Writing aids</strong>
+                    <button onClick={() => updatePenSetting("stabilization", penSettings.stabilization === 0 ? 35 : 0)}>
+                      <span>Stroke smoothing</span><span>{penSettings.stabilization === 0 ? "Off" : "On"} ›</span>
+                    </button>
+                    <button onClick={() => {
+                      setPenSettingsOpen(false);
+                      if (selectedPage.strokes.length) void recognizeInk();
+                      else window.alert("Write something first, then use Ink → Text.");
+                    }}>
+                      <span>Handwriting → Text</span><span>›</span>
+                    </button>
+                    <button onClick={() => {
+                      setPenSettingsOpen(false);
+                      setAiOpen(true);
+                      setAiPrompt("Help me understand and check the math in my notes. If handwriting is missing, ask me to recognize it first.");
+                    }}>
+                      <span>Math assist</span><span>›</span>
+                    </button>
+                  </div>
+                  <div className="penPopoverSection">
+                    <strong>Palette shortcuts</strong>
+                    <div className="penPaletteShortcuts">
+                      {["#1f2937", "#ffffff", "#1677c8", "#ef4444", "#f59e0b", "#22c55e", "#8b5cf6"].map((color) => (
+                        <button key={color} className={inkColor === color ? "active" : ""}
+                          style={{ background: color }} onClick={() => setInkColor(color)} aria-label={`Use ${color}`} />
+                      ))}
+                      <label className="penPaletteCustom" title="Choose a custom ink color">
+                        +<input type="color" value={inkColor} onChange={(event) => setInkColor(event.target.value)} />
+                      </label>
+                    </div>
+                    <button className="penReset" onClick={() => setPenSettings(DEFAULT_PEN_SETTINGS)}>Reset pen settings</button>
+                  </div>
+                </section>
+              )}
+
               <div className="contextToolRow">
                 <div className="contextIdentity">
                   <strong>{toolGroup(tool) === "pen" ? "Pen" : toolGroup(tool) === "insert" ? "Insert" : toolGroup(tool) === "more" ? "More" : toolLabel(tool)}</strong>
                 </div>
 
                 {toolGroup(tool) === "pen" && (
-                  <div className="nestedChoices">
-                    {(["fountain", "ballpoint", "pencil"] as Tool[]).map((name) => (
-                      <button key={name} className={`nestedChoice ${tool === name ? "active" : ""}`} onClick={() => selectTool(name)}>
-                        <ToolIcon name={name} /><span>{toolLabel(name)}</span>
-                      </button>
-                    ))}
-                  </div>
+                  <button className="nestedChoice penSettingsTrigger" onClick={() => setPenSettingsOpen((open) => !open)} aria-expanded={penSettingsOpen}>
+                    <ToolIcon name={tool} /><span>{toolLabel(tool)} · Settings ⌄</span>
+                  </button>
                 )}
 
                 {toolGroup(tool) === "insert" && (
@@ -835,7 +944,7 @@ export default function Home() {
 
                 {tool === "hand" && <span className="contextHint">Drag to move around the page without drawing.</span>}
 
-                {(["fountain", "ballpoint", "pencil", "highlighter"] as Tool[]).includes(tool) && (
+                {(["fountain", "ballpoint", "pencil", "brush", "highlighter"] as Tool[]).includes(tool) && (
                   <>
                     <div className="contextDivider" />
                     <div className="colorStrip">
@@ -879,6 +988,11 @@ export default function Home() {
                     paper={selectedPage.paper}
                     enabled={drawingEnabled}
                     width={inkWidth}
+                    penStyle={tool === "fountain" ? "fountain" : tool === "brush" ? "brush" : tool === "pencil" ? "pencil" : "ballpoint"}
+                    tipSharpness={penSettings.tipSharpness}
+                    pressureSensitivity={penSettings.pressureSensitivity}
+                    tipFlatness={penSettings.tipFlatness}
+                    stabilization={penSettings.stabilization}
                   />
                 </div>
               </article>
