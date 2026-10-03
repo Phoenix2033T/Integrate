@@ -51,6 +51,7 @@ export type Notebook = {
   id: string;
   title: string;
   emoji: string;
+  folder: string;
   pages: Page[];
 };
 
