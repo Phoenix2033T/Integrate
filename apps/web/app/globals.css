@@ -450,3 +450,32 @@ button, input, textarea, select { font: inherit; }
   .saveState { display: none; }
   .attachmentGrid { grid-template-columns: 1fr; }
 }
+
+.notebookName {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.notebookFolder {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.folderInput {
+  width: calc(100% - 6px);
+  margin: 2px 3px 7px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 5px 7px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  outline: none;
+}
+.folderInput:focus {
+  border-color: #d0cbff;
+  background: #faf9ff;
+}
+.fileIcon {
+  text-decoration: none;
+}
