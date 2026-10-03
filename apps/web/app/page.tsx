@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import InkCanvas from "../components/InkCanvas";
 import type { IntegrateWorkspace, Notebook, Page, PaperStyle } from "../lib/types";
 
@@ -137,7 +137,7 @@ export default function Home() {
   const [inkColor, setInkColor] = useState("#1f2937");
   const [aiOpen, setAiOpen] = useState(true);
   const [aiPrompt, setAiPrompt] = useState("");
-  const [hydrated, setHydrated] = useState(false);
+  const [hydrated, setHydrated] = useState(false);\n  const editorRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     const loaded = loadWorkspace();
@@ -291,6 +291,45 @@ export default function Home() {
     patchPage({ strokes: [] });
   }
 
+  function formatSelection(prefix: string, suffix = prefix, fallback = "text") {
+    if (!selectedPage || !editorRef.current) return;
+    const editor = editorRef.current;
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    const picked = selectedPage.body.slice(start, end) || fallback;
+    const nextBody =
+      selectedPage.body.slice(0, start) +
+      prefix +
+      picked +
+      suffix +
+      selectedPage.body.slice(end);
+
+    patchPage({ body: nextBody });
+
+    requestAnimationFrame(() => {
+      const cursorStart = start + prefix.length;
+      const cursorEnd = cursorStart + picked.length;
+      editor.focus();
+      editor.setSelectionRange(cursorStart, cursorEnd);
+    });
+  }
+
+  function insertLinePrefix(prefix: string, fallback = "New item") {
+    if (!selectedPage || !editorRef.current) return;
+    const editor = editorRef.current;
+    const start = editor.selectionStart;
+    const lineStart = selectedPage.body.lastIndexOf("\\n", Math.max(0, start - 1)) + 1;
+    const nextBody =
+      selectedPage.body.slice(0, lineStart) +
+      prefix +
+      (selectedPage.body.slice(lineStart) || fallback);
+    patchPage({ body: nextBody });
+    requestAnimationFrame(() => {
+      editor.focus();
+      editor.setSelectionRange(lineStart + prefix.length, lineStart + prefix.length);
+    });
+  }
+
   return (
     <main className={`shell ${aiOpen ? "" : "aiClosed"}`}>
       <aside className="sidebar">
@@ -391,6 +430,20 @@ export default function Home() {
                   </button>
                 ))}
 
+                {tool === "text" && (
+                  <>
+                    <button className="tool compact" onClick={() => formatSelection("**", "**", "bold text")} title="Bold">
+                      <strong>B</strong>
+                    </button>
+                    <button className="tool compact" onClick={() => insertLinePrefix("## ", "Heading")} title="Heading">
+                      H
+                    </button>
+                    <button className="tool compact" onClick={() => insertLinePrefix("- [ ] ", "Task")} title="Checklist">
+                      ☑
+                    </button>
+                  </>
+                )}
+
                 {tool !== "text" && tool !== "eraser" && (
                   <label className="colorControl" title="Ink color">
                     <input
@@ -445,6 +498,7 @@ export default function Home() {
 
                 <div className="pageBody">
                   <textarea
+                    ref={editorRef}
                     className={`editor ${tool !== "text" ? "drawingMode" : ""}`}
                     placeholder="Start taking notes..."
                     value={selectedPage.body}
