@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import InkCanvas from "../components/InkCanvas";
 import { strokesToSvgDataUrl } from "../lib/ink";
-import type {
 import { createId } from "../lib/id";
+import type {
   AiScope,
   IntegrateWorkspace,
   Notebook,
