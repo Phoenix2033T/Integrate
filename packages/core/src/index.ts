@@ -19,7 +19,7 @@ export type Revision = {
   createdAt: number;
 };
 
-export type InkPoint = { x: number; y: number };
+export type InkPoint = { x: number; y: number; pressure?: number };
 
 export type InkStroke = {
   id: string;
@@ -28,6 +28,11 @@ export type InkStroke = {
   width: number;
   opacity: number;
   points: InkPoint[];
+  /** Optional settings preserve compatibility with earlier saved strokes. */
+  penStyle?: "fountain" | "ballpoint" | "brush" | "pencil";
+  tipSharpness?: number;
+  pressureSensitivity?: number;
+  tipFlatness?: number;
 };
 
 export type Page = {
