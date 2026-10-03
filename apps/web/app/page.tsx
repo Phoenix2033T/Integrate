@@ -41,6 +41,7 @@ const starterWorkspace: IntegrateWorkspace = {
       id: "general",
       title: "My Notes",
       emoji: "📘",
+      folder: "School",
       pages: [
         normalizePage({
           id: "welcome",
@@ -63,6 +64,7 @@ const starterWorkspace: IntegrateWorkspace = {
       id: "stem",
       title: "STEM",
       emoji: "🧠",
+      folder: "School",
       pages: [
         normalizePage({
           id: "calculus",
