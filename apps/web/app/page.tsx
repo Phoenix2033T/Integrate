@@ -884,6 +884,14 @@ export default function Home() {
                     </div>
                   )}
 
+                  <div className="pageDetailsActions">
+                    <button className="tool" onClick={downloadMarkdown}>Export page</button>
+                    <button className="tool" onClick={downloadWorkspace}>Backup notebooks</button>
+                    <button className="tool" onClick={() => workspaceImportRef.current?.click()}>Import backup</button>
+                    <input ref={workspaceImportRef} className="hiddenInput" type="file" accept="application/json,.json" onChange={(event) => void importWorkspace(event.target.files?.[0])} />
+                    <button className="tool danger" onClick={deletePage}>Delete page</button>
+                  </div>
+
                   <div className="versionRow">
                     <button className="linkButton" onClick={saveRevision}>Save version</button>
                     {selectedPage.revisions.slice(0, 3).map((revision) => (
