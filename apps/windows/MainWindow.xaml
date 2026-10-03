@@ -5,7 +5,7 @@
     xmlns:controls="using:Microsoft.UI.Xaml.Controls"
     Title="Integrate">
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid x:Name="RootGrid" Background="#EDF7FF">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="260"/>
             <ColumnDefinition Width="260"/>
@@ -21,7 +21,7 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Orientation="Horizontal" Spacing="10">
-                    <Border Width="38" Height="38" CornerRadius="10" Background="#17191D">
+                    <Border Width="38" Height="38" CornerRadius="10" Background="#1677C8">
                         <TextBlock Text="∫" Foreground="White" FontSize="26" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel>
@@ -78,6 +78,7 @@
                 <Button Content="Save" Click="Save_Click"/>
                 <Button Content="★ Favorite" Click="Favorite_Click"/>
                 <Button Content="Ask AI" Click="AskAI_Click"/>
+                <Button x:Name="ThemeButton" Content="☾ Dark" Click="ThemeButton_Click"/>
             </StackPanel>
 
             <Grid Grid.Row="1" Margin="0,14,0,10" ColumnSpacing="8">
