@@ -95,6 +95,7 @@ function loadWorkspace(): IntegrateWorkspace {
           id: string;
           title: string;
           emoji: string;
+          folder?: string;
           pages: Array<Partial<Page> & { id?: string }>;
         }>;
       };
@@ -103,6 +104,7 @@ function loadWorkspace(): IntegrateWorkspace {
         version: 3,
         notebooks: parsed.notebooks.map((notebook) => ({
           ...notebook,
+          folder: notebook.folder || "Unfiled",
           pages: notebook.pages.map(normalizePage)
         }))
       };
@@ -127,6 +129,7 @@ function loadWorkspace(): IntegrateWorkspace {
             id: crypto.randomUUID(),
             title: "Imported Notes",
             emoji: "📥",
+            folder: "Imported",
             pages: notes.map((note) =>
               normalizePage({
                 id: note.id,
@@ -274,6 +277,7 @@ export default function Home() {
       id: crypto.randomUUID(),
       title: "New Notebook",
       emoji: "📓",
+      folder: "Unfiled",
       pages: [page]
     };
     setWorkspace((current) => ({ ...current, notebooks: [...current.notebooks, notebook] }));
@@ -295,12 +299,12 @@ export default function Home() {
     setSelectedPageId(page.id);
   }
 
-  function renameNotebook(title: string) {
+  function patchNotebook(patch: Partial<Notebook>) {
     if (!selectedNotebook) return;
     setWorkspace((current) => ({
       ...current,
       notebooks: current.notebooks.map((notebook) =>
-        notebook.id === selectedNotebook.id ? { ...notebook, title } : notebook
+        notebook.id === selectedNotebook.id ? { ...notebook, ...patch } : notebook
       )
     }));
   }
@@ -360,7 +364,7 @@ export default function Home() {
       if (!isImage && !isPdf) continue;
 
       let dataUrl: string | undefined;
-      if (isImage && file.size <= 1_500_000) {
+      if (file.size <= 1_500_000) {
         dataUrl = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(String(reader.result));
@@ -554,7 +558,10 @@ export default function Home() {
                   onClick={() => selectNotebook(notebook)}
                 >
                   <span>{notebook.emoji}</span>
-                  <span className="notebookName">{notebook.title}</span>
+                  <span className="notebookName">
+                    {notebook.title}
+                    <small className="notebookFolder">{notebook.folder || "Unfiled"}</small>
+                  </span>
                   <span className="count">{notebook.pages.length}</span>
                 </button>
               ))}
@@ -565,11 +572,18 @@ export default function Home() {
                 <div className="notebookHeader">
                   <input
                     value={selectedNotebook.title}
-                    onChange={(event) => renameNotebook(event.target.value)}
+                    onChange={(event) => patchNotebook({ title: event.target.value })}
                     aria-label="Notebook title"
                   />
                   <button onClick={createPage}>＋</button>
                 </div>
+                <input
+                  className="folderInput"
+                  value={selectedNotebook.folder || ""}
+                  placeholder="Folder"
+                  onChange={(event) => patchNotebook({ folder: event.target.value })}
+                  aria-label="Notebook folder"
+                />
                 <div className="pageList">
                   {selectedNotebook.pages.map((page) => (
                     <button
@@ -664,6 +678,8 @@ export default function Home() {
                         <div className="attachmentCard" key={attachment.id}>
                           {attachment.type === "image" && attachment.dataUrl ? (
                             <img src={attachment.dataUrl} alt={attachment.name} />
+                          ) : attachment.type === "pdf" && attachment.dataUrl ? (
+                            <a className="fileIcon" href={attachment.dataUrl} target="_blank" rel="noreferrer">PDF</a>
                           ) : (
                             <div className="fileIcon">{attachment.type === "pdf" ? "PDF" : "IMG"}</div>
                           )}
