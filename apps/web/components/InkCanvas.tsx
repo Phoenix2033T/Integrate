@@ -11,6 +11,7 @@ type Props = {
   tool: Tool;
   color: string;
   paper: PaperStyle;
+  enabled: boolean;
 };
 
 function pathFor(points: InkPoint[]) {
