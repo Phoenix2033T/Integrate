@@ -114,7 +114,6 @@ struct NoteEditorView: View {
             .background(Color.accentColor.opacity(0.045))
         }
         .navigationTitle(page.title)
-        .navigationSubtitle("Handwriting notebook")
         .sheet(isPresented: $showingAI) {
             NavigationStack {
                 Form {
