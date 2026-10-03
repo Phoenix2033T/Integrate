@@ -458,6 +458,7 @@ export default function Home() {
                     tool={tool === "text" ? "pen" : tool}
                     color={inkColor}
                     paper={selectedPage.paper}
+                    enabled={tool !== "text"}
                   />
                 </div>
               </article>
