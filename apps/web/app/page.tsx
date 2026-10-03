@@ -169,14 +169,16 @@ export default function Home() {
   const [selectedNotebookId, setSelectedNotebookId] = useState("general");
   const [selectedPageId, setSelectedPageId] = useState("welcome");
   const [query, setQuery] = useState("");
-  const [tool, setTool] = useState<Tool>("text");
+  const [tool, setTool] = useState<Tool>("pen");
   const [inkColor, setInkColor] = useState("#1f2937");
+  const [inkWidth, setInkWidth] = useState(3.4);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [saveState, setSaveState] = useState<"saved" | "saving">("saved");
   const [tagDraft, setTagDraft] = useState("");
   const [theme, setTheme] = useState<ThemeMode>("light");
 
-  const [aiOpen, setAiOpen] = useState(true);
+  const [aiOpen, setAiOpen] = useState(false);
   const [aiScope, setAiScope] = useState<AiScope>("page");
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiResponse, setAiResponse] = useState("");
@@ -747,17 +749,61 @@ export default function Home() {
       <section className="workspace">
         {selectedPage && (
           <>
-            <header className="topbar">
-              <div className="toolGroup">
-                {(["text", "pen", "highlighter", "eraser"] as Tool[]).map((name) => (
+            <div className="notebookChrome">
+              <div className="notebookIdentity">
+                <span className="notebookEmoji">{selectedNotebook?.emoji || "📓"}</span>
+                <div>
+                  <div className="chromeNotebookName">{selectedNotebook?.title}</div>
+                  <div className="chromePageName">{selectedPage.title} · Page {(selectedNotebook?.pages.findIndex((page) => page.id === selectedPage.id) ?? 0) + 1} of {selectedNotebook?.pages.length ?? 1}</div>
+                </div>
+              </div>
+              <div className="chromeActions">
+                <span className={`saveState ${saveState}`}>{saveState === "saved" ? "Saved" : "Saving…"}</span>
+                <button className="chromeButton" onClick={() => setDetailsOpen((value) => !value)}>{detailsOpen ? "Hide details" : "Page details"}</button>
+                <button className="chromeButton aiButton" onClick={() => setAiOpen((value) => !value)}>✦ AI</button>
+              </div>
+            </div>
+
+            <header className="topbar handwritingToolbar">
+              <div className="toolGroup primaryTools" role="toolbar" aria-label="Writing tools">
+                {(["pen", "highlighter", "eraser", "text"] as Tool[]).map((name) => (
                   <button
                     key={name}
-                    className={`tool ${tool === name ? "active" : ""}`}
+                    className={`tool writingTool ${tool === name ? "active" : ""}`}
                     onClick={() => setTool(name)}
+                    title={name === "pen" ? "Pen" : name === "highlighter" ? "Highlighter" : name === "eraser" ? "Eraser" : "Text"}
                   >
-                    {name === "text" ? "Text" : name === "pen" ? "Pen" : name === "highlighter" ? "Highlight" : "Eraser"}
+                    <span className="toolIcon" aria-hidden="true">{name === "pen" ? "✎" : name === "highlighter" ? "▰" : name === "eraser" ? "◇" : "T"}</span>
+                    <span className="toolLabel">{name === "pen" ? "Pen" : name === "highlighter" ? "Highlighter" : name === "eraser" ? "Eraser" : "Text"}</span>
                   </button>
                 ))}
+                {tool !== "text" && tool !== "eraser" && (
+                  <>
+                    <label className="colorControl inkColorControl" title="Ink color">
+                      <input type="color" value={inkColor} onChange={(event) => setInkColor(event.target.value)} />
+                    </label>
+                    <label className="strokeControl" title="Stroke thickness">
+                      <span>Thin</span>
+                      <input
+                        type="range"
+                        min={tool === "highlighter" ? 12 : 1.8}
+                        max={tool === "highlighter" ? 36 : 8}
+                        step="0.2"
+                        value={inkWidth}
+                        onChange={(event) => setInkWidth(Number(event.target.value))}
+                      />
+                      <span>Thick</span>
+                    </label>
+                  </>
+                )}
+                <div className="toolbarDivider" />
+                <button className="tool iconOnly" onClick={() => patchPage({ strokes: selectedPage.strokes.slice(0, -1) })} disabled={!selectedPage.strokes.length} title="Undo last stroke">↶</button>
+                <button className="tool" onClick={() => void recognizeInk()} disabled={!selectedPage.strokes.length || recognitionLoading}>
+                  {recognitionLoading ? "Reading…" : "Handwriting → Text"}
+                </button>
+              </div>
+
+              <div className="toolGroup secondaryTools">
                 {tool === "text" && (
                   <>
                     <button className="tool compact" onClick={() => formatSelection("**", "**", "bold text")}><strong>B</strong></button>
@@ -765,41 +811,22 @@ export default function Home() {
                     <button className="tool compact" onClick={() => insertLinePrefix("- [ ] ")}>☑</button>
                   </>
                 )}
-                {tool !== "text" && tool !== "eraser" && (
-                  <label className="colorControl">
-                    <input type="color" value={inkColor} onChange={(event) => setInkColor(event.target.value)} />
-                  </label>
-                )}
-                <button className="tool" onClick={() => patchPage({ strokes: selectedPage.strokes.slice(0, -1) })} disabled={!selectedPage.strokes.length}>Undo ink</button>
-                <button className="tool" onClick={() => void recognizeInk()} disabled={!selectedPage.strokes.length || recognitionLoading}>
-                  {recognitionLoading ? "Reading…" : "Recognize ink"}
-                </button>
-                <button className={`tool ${mathOpen ? "active" : ""}`} onClick={() => { setMathOpen((value) => !value); setAiOpen(true); }}>Math check</button>
-              </div>
-
-              <div className="toolGroup">
-                <span className={`saveState ${saveState}`}>{saveState === "saved" ? "Saved" : "Saving…"}</span>
-                <button className={`tool favoriteButton ${selectedPage.favorite ? "favorite" : ""}`} onClick={() => patchPage({ favorite: !selectedPage.favorite })}>★</button>
-                <button className="tool" onClick={() => fileInputRef.current?.click()}>Attach</button>
+                <button className="tool" onClick={() => fileInputRef.current?.click()} title="Insert image or PDF">＋ Insert</button>
                 <input ref={fileInputRef} className="hiddenInput" type="file" multiple accept="image/*,application/pdf" onChange={(event) => void addAttachments(event.target.files)} />
-                <button className="tool" onClick={downloadMarkdown}>Export MD</button>
-                <button className="tool" onClick={downloadWorkspace}>Backup</button>
-                <button className="tool" onClick={() => workspaceImportRef.current?.click()}>Import</button>
-                <input ref={workspaceImportRef} className="hiddenInput" type="file" accept="application/json,.json" onChange={(event) => void importWorkspace(event.target.files?.[0])} />
-                <select className="paperSelect" value={selectedPage.paper} onChange={(event) => patchPage({ paper: event.target.value as PaperStyle })}>
-                  <option value="blank">Blank</option>
-                  <option value="lined">Lined</option>
-                  <option value="grid">Grid</option>
-                  <option value="dots">Dots</option>
+                <select className="paperSelect" value={selectedPage.paper} onChange={(event) => patchPage({ paper: event.target.value as PaperStyle })} title="Paper template">
+                  <option value="blank">Blank paper</option>
+                  <option value="lined">Ruled paper</option>
+                  <option value="grid">Grid paper</option>
+                  <option value="dots">Dotted paper</option>
                 </select>
-                <button className="tool aiButton" onClick={() => setAiOpen((value) => !value)}>✦ AI</button>
-                <button className="tool danger" onClick={deletePage}>Delete</button>
+                <button className={`tool favoriteButton ${selectedPage.favorite ? "favorite" : ""}`} onClick={() => patchPage({ favorite: !selectedPage.favorite })} title="Favorite">★</button>
+                <button className={`tool ${mathOpen ? "active" : ""}`} onClick={() => { setMathOpen((value) => !value); setAiOpen(true); }} title="Check handwritten math">Math</button>
               </div>
             </header>
 
             <div className="documentWrap">
               <article className={`document paper-${selectedPage.paper}`}>
-                <div className="documentMeta">
+                {detailsOpen && <div className="documentMeta pageDetailsSheet">
                   <input className="titleInput" value={selectedPage.title} onChange={(event) => patchPage({ title: event.target.value })} />
                   <input className="subjectInput" value={selectedPage.subject} onChange={(event) => patchPage({ subject: event.target.value })} />
 
@@ -865,7 +892,7 @@ export default function Home() {
                       </button>
                     ))}
                   </div>
-                </div>
+                </div>}
 
                 <div className="pageBody">
                   <textarea
@@ -883,6 +910,7 @@ export default function Home() {
                     color={inkColor}
                     paper={selectedPage.paper}
                     enabled={tool !== "text"}
+                    width={inkWidth}
                   />
                 </div>
               </article>
