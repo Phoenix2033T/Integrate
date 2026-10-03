@@ -45,15 +45,27 @@ export type Page = {
   updatedAt: number;
 };
 
+export type Folder = {
+  id: string;
+  name: string;
+  parentId: string | null;
+  color: string;
+  createdAt: number;
+};
+
 export type Notebook = {
   id: string;
   title: string;
   emoji: string;
-  folder: string;
+  color?: string;
+  folderId: string | null;
+  folder?: string;
   pages: Page[];
+  updatedAt?: number;
 };
 
 export type IntegrateWorkspace = {
-  version: 3;
+  version: 4;
+  folders: Folder[];
   notebooks: Notebook[];
 };
