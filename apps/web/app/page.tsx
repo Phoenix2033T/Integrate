@@ -334,6 +334,28 @@ export default function Home() {
     return result;
   }, [currentFolder, workspace.folders]);
 
+  function renderFolderTree(parentId: string | null, depth = 0): React.ReactNode {
+    return workspace.folders
+      .filter((folder) => folder.parentId === parentId)
+      .map((folder) => {
+        const hasChildren = workspace.folders.some((item) => item.parentId === folder.id);
+        return (
+          <div key={folder.id}>
+            <button
+              className={`treeFolder ${currentFolderId === folder.id ? "active" : ""}`}
+              style={{ paddingLeft: `${12 + depth * 16}px` }}
+              onClick={() => { setCurrentFolderId(folder.id); setQuery(""); }}
+            >
+              <span className="treeChevron">{hasChildren ? "⌄" : ""}</span>
+              <span className="treeDot" style={{ background: folder.color }} />
+              <span className="treeFolderName">{folder.name}</span>
+            </button>
+            {renderFolderTree(folder.id, depth + 1)}
+          </div>
+        );
+      });
+  }
+
   function patchPage(patch: Partial<Page>) {
     if (!selectedNotebook || !selectedPage) return;
     setWorkspace((current) => ({
@@ -563,13 +585,7 @@ export default function Home() {
           <button className="libraryNav" onClick={() => setQuery("")}>◷ <span>Recent</span></button>
 
           <div className="librarySidebarLabel">Folders</div>
-          <div className="folderTree">
-            {workspace.folders.filter((folder) => folder.parentId === null).map((folder) => (
-              <button key={folder.id} className="treeFolder" onClick={() => { setCurrentFolderId(folder.id); setQuery(""); }}>
-                <span className="treeDot" style={{ background: folder.color }} />{folder.name}
-              </button>
-            ))}
-          </div>
+          <div className="folderTree">{renderFolderTree(null)}</div>
 
           <div className="sidebarBottom">
             <div className="themeSwitcher" role="group" aria-label="Appearance">
@@ -658,8 +674,11 @@ export default function Home() {
             <button className="addTab" onClick={createPage}>＋</button>
           </div>
           <div className="editorHeaderActions">
-            <button onClick={() => setDetailsOpen((value) => !value)}>ⓘ</button>
-            <button className="aiHeaderButton" onClick={() => setAiOpen((value) => !value)}>✦ AI</button>
+            <div className="pageCounter">{(selectedNotebook?.pages.findIndex((page) => page.id === selectedPage?.id) ?? 0) + 1}<span>/</span>{selectedNotebook?.pages.length ?? 1}</div>
+            <button className={detailsOpen ? "headerAction active" : "headerAction"} onClick={() => setDetailsOpen((value) => !value)} aria-label="Page details" title="Page details">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 10v6M12 7.5h.01"/></svg>
+            </button>
+            <button className="aiHeaderButton" onClick={() => setAiOpen((value) => !value)}><ToolIcon name="sparkles" /><span>AI</span></button>
           </div>
         </header>
 
