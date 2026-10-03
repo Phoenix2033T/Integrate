@@ -53,6 +53,7 @@ export type Folder = {
   name: string;
   parentId: string | null;
   color: string;
+  symbol?: string;
   createdAt: number;
 };
 
