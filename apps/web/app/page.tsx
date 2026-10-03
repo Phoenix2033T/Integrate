@@ -251,6 +251,7 @@ export default function Home() {
   const [saveState, setSaveState] = useState<"saved" | "saving">("saved");
 
   const [tool, setTool] = useState<Tool>("ballpoint");
+  const [lastPenStyle, setLastPenStyle] = useState<Tool>("ballpoint");
   const [inkColor, setInkColor] = useState("#1f2937");
   const [inkWidth, setInkWidth] = useState(3.4);
   const [penSettingsOpen, setPenSettingsOpen] = useState(false);
@@ -285,7 +286,10 @@ export default function Home() {
           if (typeof value === "number" && Number.isFinite(value)) restored[key] = Math.max(0, Math.min(100, value));
         }
         setPenSettings(restored);
-        if (parsed.style && ["fountain", "ballpoint", "brush", "pencil"].includes(parsed.style)) setTool(parsed.style);
+        if (parsed.style && ["fountain", "ballpoint", "brush", "pencil"].includes(parsed.style)) {
+          setTool(parsed.style);
+          setLastPenStyle(parsed.style);
+        }
       }
     } catch { /* Ignore invalid saved preferences. */ }
 
@@ -308,14 +312,17 @@ export default function Home() {
     if (!hydrated) return;
     window.localStorage.setItem(PEN_SETTINGS_KEY, JSON.stringify({
       settings: penSettings,
-      style: toolGroup(tool) === "pen" ? tool : "ballpoint"
+      style: lastPenStyle
     }));
-  }, [penSettings, tool, hydrated]);
+  }, [penSettings, lastPenStyle, hydrated]);
 
   useEffect(() => {
-    if (theme === "dark" && inkColor === "#1f2937") setInkColor("#eaf6ff");
-    if (theme === "light" && inkColor === "#eaf6ff") setInkColor("#1f2937");
-  }, [theme, inkColor]);
+    setInkColor((current) => {
+      if (theme === "dark" && current === "#1f2937") return "#eaf6ff";
+      if (theme === "light" && current === "#eaf6ff") return "#1f2937";
+      return current;
+    });
+  }, [theme]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -498,6 +505,7 @@ export default function Home() {
 
   function selectTool(next: Tool) {
     setTool(next);
+    if (toolGroup(next) === "pen") setLastPenStyle(next);
     if (toolGroup(next) !== "pen") setPenSettingsOpen(false);
     if (next === "fountain") setInkWidth(4.2);
     if (next === "ballpoint") setInkWidth(3.4);
@@ -789,7 +797,7 @@ export default function Home() {
             <div className="floatingToolDock nestedDock" role="toolbar" aria-label="Notebook tools">
               <div className="primaryToolRow">
                 <button className={`modernTool ${toolGroup(tool) === "pen" ? "active" : ""}`} onClick={() => {
-                  if (toolGroup(tool) !== "pen") selectTool("ballpoint");
+                  if (toolGroup(tool) !== "pen") selectTool(lastPenStyle);
                   setPenSettingsOpen((open) => !open);
                 }} title="Pen settings" aria-expanded={penSettingsOpen} aria-haspopup="dialog">
                   <ToolIcon name="pen" /><span>Pen⌄</span>
