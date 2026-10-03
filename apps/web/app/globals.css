@@ -1108,3 +1108,14 @@ html, body {
   }
   .editor { padding: 34px 28px 60px; }
 }
+
+.pageDetailsActions {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  padding: 4px 7px 10px;
+  border-top: 1px solid var(--line);
+  margin-top: 4px;
+  padding-top: 10px;
+}
+.pageDetailsActions .tool { font-size: 11px; }
