@@ -18,6 +18,8 @@ type Tool = "text" | "pen" | "highlighter" | "eraser";
 const STORAGE_KEY = "integrate.workspace.v3";
 const LEGACY_V2_KEY = "integrate.workspace.v2";
 const LEGACY_V1_KEY = "integrate.notes.v1";
+const THEME_KEY = "integrate.theme";
+type ThemeMode = "light" | "dark";
 
 function normalizePage(page: Partial<Page> & { id?: string }): Page {
   return {
@@ -172,6 +174,7 @@ export default function Home() {
   const [hydrated, setHydrated] = useState(false);
   const [saveState, setSaveState] = useState<"saved" | "saving">("saved");
   const [tagDraft, setTagDraft] = useState("");
+  const [theme, setTheme] = useState<ThemeMode>("light");
 
   const [aiOpen, setAiOpen] = useState(true);
   const [aiScope, setAiScope] = useState<AiScope>("page");
@@ -193,6 +196,11 @@ export default function Home() {
   const workspaceImportRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
+    const savedTheme = window.localStorage.getItem(THEME_KEY);
+    const initialTheme: ThemeMode = savedTheme === "dark" ? "dark" : "light";
+    setTheme(initialTheme);
+    document.documentElement.dataset.theme = initialTheme;
+
     const loaded = loadWorkspace();
     setWorkspace(loaded);
     const firstNotebook = loaded.notebooks[0];
@@ -202,6 +210,11 @@ export default function Home() {
     }
     setHydrated(true);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    if (hydrated) window.localStorage.setItem(THEME_KEY, theme);
+  }, [theme, hydrated]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -611,6 +624,27 @@ export default function Home() {
         <div className="sidebarActions">
           <button className="primary" onClick={createPage}>+ New page</button>
           <button className="secondaryIcon" onClick={createNotebook} title="New notebook">＋</button>
+        </div>
+
+        <div className="themeSwitcher" role="group" aria-label="Appearance">
+          <button
+            className={`themeChoice ${theme === "light" ? "active" : ""}`}
+            onClick={() => setTheme("light")}
+            aria-pressed={theme === "light"}
+            title="Use light mode"
+          >
+            <span aria-hidden="true">☀</span>
+            Light
+          </button>
+          <button
+            className={`themeChoice ${theme === "dark" ? "active" : ""}`}
+            onClick={() => setTheme("dark")}
+            aria-pressed={theme === "dark"}
+            title="Use dark mode"
+          >
+            <span aria-hidden="true">☾</span>
+            Dark
+          </button>
         </div>
 
         <input
