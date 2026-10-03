@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import InkCanvas from "../components/InkCanvas";
 import { strokesToSvgDataUrl } from "../lib/ink";
 import type {
+import { createId } from "../lib/id";
   AiScope,
   IntegrateWorkspace,
   Notebook,
@@ -23,7 +24,7 @@ type ThemeMode = "light" | "dark";
 
 function normalizePage(page: Partial<Page> & { id?: string }): Page {
   return {
-    id: page.id || crypto.randomUUID(),
+    id: page.id || createId(),
     title: page.title || "Untitled Page",
     subject: page.subject || "General",
     body: page.body || "",
@@ -132,7 +133,7 @@ function loadWorkspace(): IntegrateWorkspace {
         version: 3,
         notebooks: [
           {
-            id: crypto.randomUUID(),
+            id: createId(),
             title: "Imported Notes",
             emoji: "📥",
             folder: "Imported",
@@ -301,7 +302,7 @@ export default function Home() {
   function createNotebook() {
     const page = makePage();
     const notebook: Notebook = {
-      id: crypto.randomUUID(),
+      id: createId(),
       title: "New Notebook",
       emoji: "📓",
       folder: "Unfiled",
@@ -364,7 +365,7 @@ export default function Home() {
   function saveRevision() {
     if (!selectedPage) return;
     const revision: Revision = {
-      id: crypto.randomUUID(),
+      id: createId(),
       title: selectedPage.title,
       subject: selectedPage.subject,
       body: selectedPage.body,
@@ -401,7 +402,7 @@ export default function Home() {
       }
 
       next.push({
-        id: crypto.randomUUID(),
+        id: createId(),
         name: file.name,
         type: isImage ? "image" : "pdf",
         mimeType: file.type,
@@ -549,7 +550,7 @@ export default function Home() {
       const parsed = JSON.parse(await file.text()) as Partial<IntegrateWorkspace>;
       if (!Array.isArray(parsed.notebooks)) throw new Error("This is not an Integrate workspace backup.");
       const notebooks: Notebook[] = parsed.notebooks.map((notebook: any) => ({
-        id: typeof notebook.id === "string" ? notebook.id : crypto.randomUUID(),
+        id: typeof notebook.id === "string" ? notebook.id : createId(),
         title: typeof notebook.title === "string" ? notebook.title : "Imported Notebook",
         emoji: typeof notebook.emoji === "string" ? notebook.emoji : "📓",
         folder: typeof notebook.folder === "string" ? notebook.folder : "Imported",
