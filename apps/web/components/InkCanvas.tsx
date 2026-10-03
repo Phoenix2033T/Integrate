@@ -94,7 +94,7 @@ export default function InkCanvas({ strokes, onChange, tool, color, paper, enabl
   );
 
   return (
-    <div className={`inkSurface paper-${paper}`}>
+    <div className="inkSurface" data-paper={paper}>
       <svg
         ref={svgRef}
         viewBox="0 0 1000 1400"
