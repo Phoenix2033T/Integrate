@@ -8,25 +8,27 @@ Integrate should work as an excellent normal notes app first, then add context-a
 
 ## Current milestone
 
-The web client now has the second working product layer:
+The web client now includes the third major product layer:
 
 - notebook → page organization
-- create and rename notebooks
-- create, switch, and delete pages
-- text notes with lightweight formatting helpers
-- pen and highlighter drawing
-- click/drag stroke eraser
-- ink color selection
-- undo-last-stroke and clear-ink actions
+- notebook folders
+- create, rename, and organize notebooks
+- create, switch, favorite, and delete pages
+- search across titles, subjects, note text, tags, and notebooks
+- typed notes with lightweight formatting helpers
+- pen, highlighter, eraser, ink color, and undo
 - blank, lined, grid, and dotted paper
-- persistent browser storage
-- automatic migration from the original v1 note format
-- search across every notebook
-- responsive layout
-- AI context surface for page / notebook / all-notes scope
-- study actions including Summarize, Quiz me, Explain, Find gaps, Study guide, and Flashcards
-
-The AI controls are still intentionally non-generative at this milestone. The data model is now ready for the next service layer to ground AI requests in actual page and notebook content instead of returning fake demo answers.
+- tags
+- image attachments
+- small PDF imports with persistent local storage
+- autosave status
+- page version snapshots and restore
+- migration from earlier Integrate local-storage formats
+- page / notebook / all-notes AI context scopes
+- real server-side AI requests
+- generated summaries, quizzes, explanations, gap analysis, study guides, and flashcards
+- shared core schemas for future native clients
+- GitHub Actions web build CI
 
 ## Run the web app
 
@@ -48,6 +50,49 @@ Then open:
 http://localhost:3000
 ```
 
+## Enable Integrate AI
+
+Copy the example environment file:
+
+```bash
+cp apps/web/.env.example apps/web/.env.local
+```
+
+Then edit `apps/web/.env.local`:
+
+```env
+OPENAI_API_KEY=your_api_key_here
+OPENAI_MODEL=gpt-6-luna
+```
+
+Restart the development server after changing environment variables.
+
+The API key is read only by the Next.js server route. It is never intentionally sent to the browser.
+
+## AI architecture
+
+The browser sends:
+
+```text
+user request
++ selected scope (page / notebook / all notes)
++ grounded note text and metadata
+```
+
+to:
+
+```text
+POST /api/ai
+```
+
+The server then calls the OpenAI Responses API and returns only the generated answer to the client.
+
+Handwritten ink currently contributes metadata indicating that ink exists, but handwriting OCR is not implemented yet. That will be a separate recognition layer before symbolic math checking.
+
+## Attachment limits
+
+For this local-first MVP, files up to about 1.5 MB can be persisted as browser data URLs. Larger files keep their metadata but are not fully persisted. Production storage will move attachments into object storage instead of browser localStorage.
+
 ## Planned platform architecture
 
 ```text
@@ -55,7 +100,7 @@ apps/
   web/        Next.js web client
   apple/      SwiftUI iPhone, iPad, and macOS client
   windows/    WinUI 3 Windows client
-  server/     API/backend services
+  server/     backend services as the project grows
 
 packages/
   core/       shared document/domain model
@@ -68,24 +113,23 @@ packages/
 ## Product pillars
 
 1. Notes — handwriting, typing, PDFs, images, drawing, organization, search.
-2. Intelligence — ask a page, notebook, selection, or all notes with cited source context.
+2. Intelligence — ask a page, notebook, selection, or all notes with grounded context.
 3. STEM — handwriting-to-math, deterministic step checking, graphs, formulas, and code cells.
 4. Study — summaries, study guides, quizzes, flashcards, practice tests, timelines, and concept maps.
 5. Multi-native — native Apple and Windows experiences plus a first-class web client.
 
-## Next layer
+## Next major layers
 
-The next major implementation layer is:
-
-- real AI request/response pipeline with page/notebook grounding
-- generated summaries, quizzes, flashcards, and study guides
-- attachments and image blocks
-- PDF import/annotation foundation
-- richer text blocks
-- folders/tags/favorites
-- autosave/status indicators and revision history
-- shared core schemas for native clients
+- handwriting OCR / math recognition
+- deterministic symbolic math checking
+- production auth, database, sync, and object storage
+- richer block editor
+- full PDF annotation
+- image-aware AI context
+- spaced repetition and mastery tracking
+- native Apple client
+- native Windows client
 
 ## Status
 
-Early active development. The current code is a functional foundation, not a completed production release.
+Active development. The current web app is a functional local-first prototype, not yet a production release.
