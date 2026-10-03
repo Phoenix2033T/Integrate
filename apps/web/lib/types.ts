@@ -1,4 +1,5 @@
 export type PaperStyle = "blank" | "lined" | "grid" | "dots";
+export type AiScope = "page" | "notebook" | "all";
 
 export type InkPoint = {
   x: number;
@@ -14,6 +15,24 @@ export type InkStroke = {
   points: InkPoint[];
 };
 
+export type NoteAttachment = {
+  id: string;
+  name: string;
+  type: "image" | "pdf";
+  mimeType: string;
+  dataUrl?: string;
+  size: number;
+  createdAt: number;
+};
+
+export type Revision = {
+  id: string;
+  title: string;
+  subject: string;
+  body: string;
+  createdAt: number;
+};
+
 export type Page = {
   id: string;
   title: string;
@@ -21,6 +40,10 @@ export type Page = {
   body: string;
   paper: PaperStyle;
   strokes: InkStroke[];
+  tags: string[];
+  favorite: boolean;
+  attachments: NoteAttachment[];
+  revisions: Revision[];
   updatedAt: number;
 };
 
@@ -32,6 +55,6 @@ export type Notebook = {
 };
 
 export type IntegrateWorkspace = {
-  version: 2;
+  version: 3;
   notebooks: Notebook[];
 };
