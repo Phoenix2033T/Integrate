@@ -61,8 +61,8 @@ function makePage(title = "Untitled Page"): Page {
 const starterWorkspace: IntegrateWorkspace = {
   version: 4,
   folders: [
-    { id: "school", name: "School", parentId: null, color: "#5aa9e6", createdAt: Date.now() },
-    { id: "stem-folder", name: "STEM", parentId: "school", color: "#8b7cf6", createdAt: Date.now() }
+    { id: "school", name: "School", parentId: null, color: "#5aa9e6", symbol: "🎓", createdAt: Date.now() },
+    { id: "stem-folder", name: "STEM", parentId: "school", color: "#8b7cf6", symbol: "∑", createdAt: Date.now() }
   ],
   notebooks: [
     {
@@ -246,6 +246,7 @@ export default function Home() {
   const [inkWidth, setInkWidth] = useState(3.4);
   const [redoStrokes, setRedoStrokes] = useState<Page["strokes"]>([]);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [folderEditorId, setFolderEditorId] = useState<string | null>(null);
 
   const [aiOpen, setAiOpen] = useState(false);
   const [aiScope, setAiScope] = useState<AiScope>("page");
@@ -389,6 +390,7 @@ export default function Home() {
       name,
       parentId: currentFolderId,
       color: ["#5aa9e6", "#8b7cf6", "#ef6f6c", "#f4a261", "#58b09c"][workspace.folders.length % 5],
+      symbol: "📁",
       createdAt: Date.now()
     };
     setWorkspace((current) => ({ ...current, folders: [...current.folders, folder] }));
@@ -431,6 +433,13 @@ export default function Home() {
       notebooks: current.notebooks.map((notebook) =>
         notebook.id === selectedNotebook.id ? { ...notebook, ...patch, updatedAt: Date.now() } : notebook
       )
+    }));
+  }
+
+  function updateFolder(folderId: string, patch: Partial<Folder>) {
+    setWorkspace((current) => ({
+      ...current,
+      folders: current.folders.map((folder) => folder.id === folderId ? { ...folder, ...patch } : folder)
     }));
   }
 
@@ -572,40 +581,37 @@ export default function Home() {
 
   if (view === "home") {
     const displayedNotebooks = searchResults ?? visibleNotebooks;
+    const folderBeingEdited = workspace.folders.find((folder) => folder.id === folderEditorId) ?? null;
+    const folderColors = ["#5aa9e6", "#6d9eeb", "#8b7cf6", "#d16ba5", "#ef6f6c", "#f4a261", "#f6c453", "#58b09c", "#39a9a3", "#64748b"];
+    const folderSymbols = ["📁", "🎓", "📚", "∑", "🧪", "✦", "🎨", "💡", "⚙", "🏠", "⭐", "🗂️"];
+
     return (
-      <main className="libraryShell">
-        <aside className="librarySidebar">
-          <div className="brand libraryBrand">
-            <div className="brandMark">∫</div>
-            <div><div className="brandName">Integrate</div><div className="muted small">Handwritten intelligence</div></div>
-          </div>
-
-          <button className="libraryNav active" onClick={() => { setCurrentFolderId(null); setQuery(""); }}>⌂ <span>Documents</span></button>
-          <button className="libraryNav" onClick={() => setQuery("★")}>☆ <span>Favorites</span></button>
-          <button className="libraryNav" onClick={() => setQuery("")}>◷ <span>Recent</span></button>
-
-          <div className="librarySidebarLabel">Folders</div>
-          <div className="folderTree">{renderFolderTree(null)}</div>
-
-          <div className="sidebarBottom">
-            <div className="themeSwitcher" role="group" aria-label="Appearance">
-              <button className={`themeChoice ${theme === "light" ? "active" : ""}`} onClick={() => setTheme("light")}>☀ Light</button>
-              <button className={`themeChoice ${theme === "dark" ? "active" : ""}`} onClick={() => setTheme("dark")}>☾ Dark</button>
-            </div>
-          </div>
-        </aside>
-
+      <main className="libraryShell libraryShellNoSidebar">
         <section className="libraryMain">
-          <header className="libraryTopbar">
+          <header className="libraryTopbar libraryTopbarFull">
+            <button className="libraryWordmark" onClick={() => { setCurrentFolderId(null); setQuery(""); }} aria-label="Go to Documents">
+              <span className="brandMark">∫</span>
+              <span><strong>Integrate</strong><small>Documents</small></span>
+            </button>
+
             <div className="librarySearch">⌕<input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search notebooks and notes" /></div>
+
+            <nav className="libraryQuickNav" aria-label="Library views">
+              <button className={!query ? "active" : ""} onClick={() => { setCurrentFolderId(null); setQuery(""); }}>Documents</button>
+              <button onClick={() => setQuery("★")}>Favorites</button>
+              <button onClick={() => setQuery("")}>Recent</button>
+            </nav>
+
             <div className="libraryTopActions">
-              <button className="libraryIconButton" title="Grid view">▦</button>
+              <button className="libraryIconButton themeQuickButton" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} title="Switch appearance">{theme === "dark" ? "☀" : "☾"}</button>
               <button className="primary newLibraryButton" onClick={createNotebook}>＋ New notebook</button>
-              <button className="libraryIconButton" onClick={createFolder} title="New folder">📁＋</button>
+              <button className="libraryIconButton newFolderButton" onClick={createFolder} title="New folder">
+                <span className="miniFolderIcon" />＋
+              </button>
             </div>
           </header>
 
-          <div className="libraryContent">
+          <div className="libraryContent libraryContentWide">
             <div className="libraryHeadingRow">
               <div>
                 <div className="breadcrumbs">
@@ -614,38 +620,54 @@ export default function Home() {
                 </div>
                 <h1>{currentFolder?.name || "Documents"}</h1>
               </div>
-              {currentFolder && <button className="subtleButton" onClick={() => deleteFolder(currentFolder)}>Folder options</button>}
+              {currentFolder && (
+                <div className="headingActions">
+                  <button className="subtleButton" onClick={() => setFolderEditorId(currentFolder.id)}>Customize folder</button>
+                  <button className="subtleButton dangerText" onClick={() => deleteFolder(currentFolder)}>Delete</button>
+                </div>
+              )}
             </div>
 
             {!searchResults && visibleFolders.length > 0 && (
               <>
-                <h2 className="sectionTitle">Folders</h2>
+                <div className="sectionHeadingWithHint"><h2 className="sectionTitle">Folders</h2><span>Folders can contain folders and notebooks</span></div>
                 <div className="documentGrid folderGrid">
                   {visibleFolders.map((folder) => {
                     const childCount = workspace.folders.filter((item) => item.parentId === folder.id).length;
                     const notebookCount = workspace.notebooks.filter((item) => item.folderId === folder.id).length;
                     return (
-                      <button className="folderTile" key={folder.id} onClick={() => setCurrentFolderId(folder.id)}>
-                        <div className="folderVisual" style={{ "--folder-color": folder.color } as React.CSSProperties}><span>☆</span></div>
-                        <strong>{folder.name}</strong>
-                        <small>{childCount} folders · {notebookCount} notebooks</small>
-                      </button>
+                      <div className="folderTile folderTileCard" key={folder.id}>
+                        <button className="folderOpenButton" onClick={() => setCurrentFolderId(folder.id)} aria-label={`Open ${folder.name}`}>
+                          <div className="folderVisual" style={{ "--folder-color": folder.color } as React.CSSProperties}>
+                            <span className="folderSymbol">{folder.symbol || "📁"}</span>
+                          </div>
+                          <strong>{folder.name}</strong>
+                          <small>{childCount} {childCount === 1 ? "folder" : "folders"} · {notebookCount} {notebookCount === 1 ? "notebook" : "notebooks"}</small>
+                        </button>
+                        <button className="itemMoreButton" onClick={() => setFolderEditorId(folder.id)} title="Customize folder" aria-label={`Customize ${folder.name}`}>•••</button>
+                      </div>
                     );
                   })}
                 </div>
               </>
             )}
 
-            <h2 className="sectionTitle">{searchResults ? "Search results" : currentFolder ? "Notebooks" : "Recent notebooks"}</h2>
-            <div className="documentGrid">
+            <div className="sectionHeadingWithHint">
+              <h2 className="sectionTitle">{searchResults ? "Search results" : currentFolder ? "Notebooks" : "Recent notebooks"}</h2>
+              {!searchResults && <span>{currentFolder ? "Notebooks in this folder" : "Recently edited"}</span>}
+            </div>
+            <div className="documentGrid notebookGrid">
               {(searchResults ?? (currentFolder ? displayedNotebooks : recentNotebooks)).map((notebook) => (
-                <button className="notebookTile" key={notebook.id} onClick={() => openNotebook(notebook)}>
+                <button className="notebookTile notebookTileCard" key={notebook.id} onClick={() => openNotebook(notebook)}>
                   <div className="notebookCover" style={{ "--notebook-color": notebook.color || "#5aa9e6" } as React.CSSProperties}>
+                    <span className="notebookSpine" />
+                    <span className="notebookPageEdge" />
                     <span className="coverEmoji">{notebook.emoji}</span>
+                    <span className="coverLabel">INTEGRATE</span>
                     <span className="coverLines" />
                   </div>
                   <strong>{notebook.title}</strong>
-                  <small>{notebook.pages.length} pages · {new Date(notebook.updatedAt || Date.now()).toLocaleDateString()}</small>
+                  <small><span className="typePill">Notebook</span>{notebook.pages.length} pages · {new Date(notebook.updatedAt || Date.now()).toLocaleDateString()}</small>
                 </button>
               ))}
               {!searchResults && currentFolder && visibleNotebooks.length === 0 && (
@@ -654,6 +676,42 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {folderBeingEdited && (
+          <div className="folderEditorBackdrop" role="presentation" onMouseDown={() => setFolderEditorId(null)}>
+            <section className="folderEditorCard" role="dialog" aria-modal="true" aria-label="Customize folder" onMouseDown={(event) => event.stopPropagation()}>
+              <div className="folderEditorHeader">
+                <div>
+                  <span className="eyebrow">Folder appearance</span>
+                  <h2>Customize {folderBeingEdited.name}</h2>
+                </div>
+                <button className="closeFolderEditor" onClick={() => setFolderEditorId(null)}>×</button>
+              </div>
+              <label className="folderNameField">Name<input value={folderBeingEdited.name} onChange={(event) => updateFolder(folderBeingEdited.id, { name: event.target.value })} /></label>
+              <div className="folderEditorSection">
+                <strong>Color</strong>
+                <div className="folderColorChoices">
+                  {folderColors.map((color) => (
+                    <button key={color} className={folderBeingEdited.color === color ? "active" : ""} style={{ background: color }} onClick={() => updateFolder(folderBeingEdited.id, { color })} aria-label={`Use folder color ${color}`} />
+                  ))}
+                </div>
+              </div>
+              <div className="folderEditorSection">
+                <strong>Symbol</strong>
+                <div className="folderSymbolChoices">
+                  {folderSymbols.map((symbol) => (
+                    <button key={symbol} className={(folderBeingEdited.symbol || "📁") === symbol ? "active" : ""} onClick={() => updateFolder(folderBeingEdited.id, { symbol })}>{symbol}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="folderPreview">
+                <div className="folderVisual" style={{ "--folder-color": folderBeingEdited.color } as React.CSSProperties}><span className="folderSymbol">{folderBeingEdited.symbol || "📁"}</span></div>
+                <div><strong>{folderBeingEdited.name}</strong><small>Folder</small></div>
+              </div>
+              <button className="primary folderDoneButton" onClick={() => setFolderEditorId(null)}>Done</button>
+            </section>
+          </div>
+        )}
       </main>
     );
   }
