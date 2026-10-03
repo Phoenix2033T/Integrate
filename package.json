@@ -1,0 +1,14 @@
+{
+  "name": "integrate",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace @integrate/web run dev",
+    "build:web": "npm --workspace @integrate/web run build",
+    "lint:web": "npm --workspace @integrate/web run lint"
+  }
+}
