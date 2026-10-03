@@ -21,7 +21,7 @@ function pathFor(points: InkPoint[]) {
     .join(" ");
 }
 
-export default function InkCanvas({ strokes, onChange, tool, color, paper }: Props) {
+export default function InkCanvas({ strokes, onChange, tool, color, paper, enabled }: Props) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [draft, setDraft] = useState<InkStroke | null>(null);
 
@@ -36,7 +36,7 @@ export default function InkCanvas({ strokes, onChange, tool, color, paper }: Pro
   }
 
   function beginStroke(event: React.PointerEvent<SVGSVGElement>) {
-    if (tool === "eraser") return;
+    if (!enabled || tool === "eraser") return;
     event.currentTarget.setPointerCapture(event.pointerId);
     const highlighter = tool === "highlighter";
     setDraft({
@@ -98,7 +98,7 @@ export default function InkCanvas({ strokes, onChange, tool, color, paper }: Pro
         ref={svgRef}
         viewBox="0 0 1000 1400"
         preserveAspectRatio="none"
-        className={`inkCanvas tool-${tool}`}
+        className={`inkCanvas tool-${tool} ${enabled ? "enabled" : "disabled"}`}
         onPointerDown={beginStroke}
         onPointerMove={extendStroke}
         onPointerUp={finishStroke}
