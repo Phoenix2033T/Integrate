@@ -479,3 +479,105 @@ button, input, textarea, select { font: inherit; }
 .fileIcon {
   text-decoration: none;
 }
+
+
+.recognitionError {
+  margin: 4px 7px 10px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: #fff1f0;
+  color: #9d241a;
+  border: 1px solid #f2c7c3;
+  font-size: 12px;
+}
+
+.recognizedInkCard {
+  margin: 4px 7px 12px;
+  border: 1px solid #dcd8ff;
+  background: #faf9ff;
+  border-radius: 12px;
+  padding: 11px 12px;
+}
+.recognizedInkHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+.recognizedInkHeader > div {
+  display: flex;
+  gap: 6px;
+}
+.recognizedInkHeader button {
+  border: 1px solid #ddd9ff;
+  background: white;
+  border-radius: 8px;
+  padding: 5px 7px;
+  cursor: pointer;
+  font-size: 11px;
+}
+.recognizedInkCard pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #454a55;
+}
+
+.mathChecker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid #ddd9ff;
+  background: #faf9ff;
+  border-radius: 13px;
+  padding: 12px;
+}
+.mathCheckerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+.smallClose {
+  font-size: 18px;
+}
+.mathChecker input {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: white;
+  border-radius: 9px;
+  padding: 9px 10px;
+  outline: none;
+}
+.mathChecker input:focus {
+  border-color: #b8b1ff;
+  box-shadow: 0 0 0 3px var(--accentSoft);
+}
+.mathResult {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 12px;
+}
+.mathResult.correct {
+  background: #eefbf3;
+  border: 1px solid #b8e6c9;
+  color: #17633a;
+}
+.mathResult.incorrect {
+  background: #fff6ef;
+  border: 1px solid #f0d0b5;
+  color: #8b4518;
+}
+.mathResult span {
+  line-height: 1.45;
+}
+.mathResult small {
+  opacity: .72;
+}
