@@ -1905,3 +1905,574 @@ textarea:focus-visible {
     display: none;
   }
 }
+
+
+/* =========================================================
+   Library v2 — full-canvas Goodnotes-style document browser
+   ========================================================= */
+.libraryShellNoSidebar {
+  grid-template-columns: 1fr !important;
+  background: var(--bg);
+}
+.libraryShellNoSidebar .libraryMain {
+  min-width: 0;
+  width: 100%;
+}
+.libraryTopbarFull {
+  height: calc(72px + env(safe-area-inset-top));
+  display: grid;
+  grid-template-columns: auto minmax(280px, 520px) 1fr auto;
+  align-items: center;
+  gap: 18px;
+  padding-left: max(24px, env(safe-area-inset-left));
+  padding-right: max(24px, env(safe-area-inset-right));
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  backdrop-filter: blur(24px) saturate(1.15);
+}
+.libraryWordmark {
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+}
+.libraryWordmark .brandMark {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: white;
+  font-size: 23px;
+  font-weight: 700;
+  box-shadow: 0 7px 18px rgba(22,119,200,.2);
+}
+.libraryWordmark > span:last-child {
+  display: grid;
+  line-height: 1.05;
+}
+.libraryWordmark strong { font-size: 13px; letter-spacing: -.02em; }
+.libraryWordmark small { margin-top: 3px; color: var(--muted); font-size: 8px; font-weight: 650; }
+.libraryTopbarFull .librarySearch {
+  width: 100%;
+  max-width: 520px;
+  height: 38px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  border-color: var(--line);
+}
+.libraryQuickNav {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+.libraryQuickNav button {
+  height: 34px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.libraryQuickNav button:hover,
+.libraryQuickNav button.active {
+  color: var(--ink);
+  background: var(--surface-soft);
+}
+.libraryTopbarFull .libraryTopActions { gap: 7px; }
+.libraryTopbarFull .libraryIconButton {
+  width: 40px;
+  height: 38px;
+  border-radius: 10px;
+}
+.newFolderButton {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  font-size: 12px;
+}
+.miniFolderIcon {
+  position: relative;
+  width: 17px;
+  height: 12px;
+  border-radius: 3px;
+  background: currentColor;
+  opacity: .8;
+}
+.miniFolderIcon::before {
+  content: "";
+  position: absolute;
+  left: 1px;
+  top: -4px;
+  width: 8px;
+  height: 5px;
+  border-radius: 2px 2px 0 0;
+  background: currentColor;
+}
+.libraryContentWide {
+  width: min(1240px, calc(100vw - 56px));
+  margin: 0 auto;
+  padding: 34px 0 max(70px, env(safe-area-inset-bottom));
+}
+.libraryContentWide .libraryHeadingRow { margin-bottom: 22px; }
+.libraryContentWide .libraryHeadingRow h1 {
+  margin-top: 5px;
+  font-size: clamp(30px, 3vw, 42px);
+  letter-spacing: -.045em;
+}
+.headingActions { display: flex; gap: 7px; align-items: center; }
+.dangerText { color: var(--danger) !important; }
+.sectionHeadingWithHint {
+  margin: 24px 0 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.sectionHeadingWithHint .sectionTitle { margin: 0; }
+.sectionHeadingWithHint > span {
+  color: var(--muted);
+  font-size: 9px;
+}
+.libraryContentWide .documentGrid {
+  grid-template-columns: repeat(auto-fill, minmax(155px, 180px));
+  justify-content: start;
+  gap: 22px 20px;
+}
+.folderTileCard,
+.notebookTileCard {
+  position: relative;
+  min-width: 0;
+}
+.folderTileCard {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+.folderOpenButton {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  display: grid;
+  gap: 5px;
+  text-align: left;
+  cursor: pointer;
+}
+.folderOpenButton strong,
+.notebookTileCard strong {
+  font-size: 11px;
+  line-height: 1.2;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.folderOpenButton small,
+.notebookTileCard small {
+  color: var(--muted);
+  font-size: 8px;
+}
+.folderVisual {
+  width: 100%;
+  height: 112px;
+  position: relative;
+  border-radius: 12px 14px 14px 14px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--folder-color) 92%, white 8%), var(--folder-color));
+  box-shadow: 0 10px 20px color-mix(in srgb, var(--folder-color) 18%, transparent), inset 0 1px 0 rgba(255,255,255,.2);
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.folderVisual::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: -12px;
+  width: 45%;
+  height: 20px;
+  border-radius: 9px 10px 0 0;
+  background: color-mix(in srgb, var(--folder-color) 94%, white 6%);
+}
+.folderOpenButton:hover .folderVisual {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 26px color-mix(in srgb, var(--folder-color) 24%, transparent), inset 0 1px 0 rgba(255,255,255,.22);
+}
+.folderSymbol {
+  position: relative;
+  z-index: 2;
+  font-size: 27px;
+  filter: saturate(.85);
+}
+.itemMoreButton {
+  position: absolute;
+  right: 7px;
+  top: 7px;
+  z-index: 4;
+  width: 29px;
+  height: 27px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(8,25,38,.22);
+  color: rgba(255,255,255,.92);
+  opacity: 0;
+  cursor: pointer;
+  font-size: 9px;
+  backdrop-filter: blur(8px);
+  transition: opacity .14s ease, background .14s ease;
+}
+.folderTileCard:hover .itemMoreButton,
+.itemMoreButton:focus-visible { opacity: 1; }
+.itemMoreButton:hover { background: rgba(8,25,38,.4); }
+
+.notebookTileCard {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  display: grid;
+  gap: 5px;
+  cursor: pointer;
+}
+.notebookCover {
+  width: 142px;
+  height: 176px;
+  justify-self: center;
+  position: relative;
+  border-radius: 5px 11px 11px 5px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 75% 18%, rgba(255,255,255,.16), transparent 24%),
+    linear-gradient(145deg, color-mix(in srgb, var(--notebook-color) 88%, white 12%), var(--notebook-color));
+  box-shadow: 8px 11px 22px rgba(0,0,0,.16), inset -2px 0 0 rgba(255,255,255,.14);
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+.notebookTileCard:hover .notebookCover {
+  transform: translateY(-3px) rotate(.35deg);
+  box-shadow: 10px 16px 28px rgba(0,0,0,.2), inset -2px 0 0 rgba(255,255,255,.14);
+}
+.notebookSpine {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 12px;
+  background: rgba(4,25,39,.18);
+  border-right: 1px solid rgba(255,255,255,.12);
+}
+.notebookPageEdge {
+  position: absolute;
+  right: 3px;
+  top: 8px;
+  bottom: 8px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: repeating-linear-gradient(to bottom, rgba(255,255,255,.6) 0 1px, rgba(255,255,255,.18) 1px 3px);
+  opacity: .65;
+}
+.coverEmoji {
+  position: absolute;
+  left: 50%;
+  top: 43%;
+  transform: translate(-50%,-50%);
+  font-size: 29px;
+}
+.coverLabel {
+  position: absolute;
+  left: 24px;
+  top: 18px;
+  font-size: 6px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  color: rgba(255,255,255,.62);
+}
+.coverLines {
+  position: absolute;
+  left: 27px;
+  right: 19px;
+  bottom: 26px;
+  height: 14px;
+  border-top: 1px solid rgba(255,255,255,.45);
+  border-bottom: 1px solid rgba(255,255,255,.3);
+}
+.typePill {
+  display: inline-flex;
+  margin-right: 5px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--accent-text);
+  font-size: 7px;
+  font-weight: 750;
+}
+.folderEditorBackdrop {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(1,10,17,.48);
+  backdrop-filter: blur(7px);
+}
+.folderEditorCard {
+  width: min(440px, calc(100vw - 28px));
+  max-height: min(650px, calc(100dvh - 30px));
+  overflow: auto;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--panel-strong) 96%, transparent);
+  color: var(--ink);
+  box-shadow: 0 28px 80px rgba(0,0,0,.3);
+}
+.folderEditorHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: start;
+}
+.folderEditorHeader h2 { margin: 4px 0 0; font-size: 20px; letter-spacing: -.03em; }
+.eyebrow { color: var(--muted); font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; }
+.closeFolderEditor {
+  width: 31px;
+  height: 31px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--surface-soft);
+  color: var(--ink);
+  font-size: 20px;
+  cursor: pointer;
+}
+.folderNameField {
+  display: grid;
+  gap: 6px;
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+}
+.folderNameField input {
+  height: 39px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--input);
+  color: var(--ink);
+  padding: 0 11px;
+  font: inherit;
+}
+.folderEditorSection { margin-top: 18px; }
+.folderEditorSection > strong { display: block; margin-bottom: 9px; font-size: 10px; }
+.folderColorChoices,
+.folderSymbolChoices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.folderColorChoices button {
+  width: 31px;
+  height: 31px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.folderColorChoices button.active {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.folderSymbolChoices button {
+  width: 42px;
+  height: 39px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 18px;
+  cursor: pointer;
+}
+.folderSymbolChoices button.active {
+  border-color: var(--accent);
+  background: var(--accentSoft);
+}
+.folderPreview {
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-soft);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.folderPreview .folderVisual { width: 100px; height: 64px; flex: 0 0 100px; }
+.folderPreview .folderVisual::before { top: -7px; height: 12px; }
+.folderPreview .folderSymbol { font-size: 20px; }
+.folderPreview > div:last-child { display: grid; gap: 3px; }
+.folderPreview small { color: var(--muted); font-size: 8px; }
+.folderDoneButton { width: 100%; margin-top: 16px; min-height: 40px; }
+
+/* =========================================================
+   Notebook v3 — Goodnotes-inspired chrome, Integrate identity
+   ========================================================= */
+.editorShell {
+  background: #1b2229;
+}
+.editorHeader {
+  height: calc(54px + env(safe-area-inset-top)) !important;
+  grid-template-columns: auto minmax(120px, 190px) minmax(0, 1fr) auto !important;
+  gap: 6px;
+  background: rgba(8,22,33,.98) !important;
+  border-bottom: 1px solid rgba(130,178,211,.13);
+  box-shadow: none !important;
+}
+.editorHeader .backButton {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: rgba(255,255,255,.055);
+  font-size: 21px;
+}
+.notebookTitleBlock input { font-size: 11px; font-weight: 780; }
+.notebookTitleBlock span { font-size: 7px; }
+.pageTabs {
+  align-self: stretch;
+  gap: 1px;
+}
+.pageTabs button {
+  min-width: 112px;
+  max-width: 165px;
+  border-left: 0;
+  border-radius: 0;
+  color: #8298aa;
+  font-size: 9px;
+}
+.pageTabs button:hover { background: rgba(255,255,255,.025); color: #d8e7f2; }
+.pageTabs button.active {
+  background: rgba(62,145,205,.07);
+  color: #e7f4ff;
+  box-shadow: inset 0 -2px 0 #67b9ff;
+}
+.pageTabs .addTab { min-width: 38px; }
+.pageCounter { background: transparent; }
+.editorHeaderActions button {
+  height: 32px;
+  min-width: 32px;
+  border: 0;
+  border-radius: 9px;
+}
+.floatingToolDock.nestedDock {
+  position: sticky;
+  top: calc(54px + env(safe-area-inset-top));
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid rgba(130,178,211,.13);
+  border-radius: 0;
+  background: rgba(13,25,35,.985);
+  box-shadow: 0 5px 18px rgba(0,0,0,.16);
+  backdrop-filter: blur(24px) saturate(1.08);
+}
+.primaryToolRow {
+  min-height: 50px;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px max(12px, env(safe-area-inset-left));
+  border-bottom: 1px solid rgba(255,255,255,.055);
+}
+.modernTool {
+  min-width: 52px;
+  width: 52px;
+  height: 40px;
+  border-radius: 9px;
+  grid-template-rows: 23px 9px;
+}
+.modernTool svg { width: 19px; height: 19px; }
+.modernTool span { font-size: 7px; }
+.modernTool.active {
+  background: rgba(54,143,207,.16);
+  box-shadow: inset 0 0 0 1px rgba(103,185,255,.2);
+}
+.primarySpacer { flex: 0 1 18px; }
+.contextToolRow {
+  min-height: 43px;
+  justify-content: center;
+  gap: 7px;
+  padding: 4px max(12px, env(safe-area-inset-left));
+}
+.contextIdentity { min-width: auto; padding: 0 7px 0 0; }
+.contextIdentity strong { font-size: 9px; color: #b9cbd8; }
+.nestedChoice {
+  height: 32px;
+  border-radius: 8px;
+  padding: 0 9px;
+}
+.nestedChoice svg { width: 15px; height: 15px; }
+.nestedChoice span { font-size: 8px; }
+.colorStrip .colorDot { width: 20px; height: 20px; }
+.widthStrip .widthDot { width: 28px; min-width: 28px; height: 28px; }
+.utilityTool { width: 32px; height: 32px; }
+.focusCanvas {
+  min-height: calc(100dvh - 147px);
+  padding-top: 22px !important;
+  padding-bottom: max(64px, env(safe-area-inset-bottom));
+  background: #1b2229;
+}
+.focusCanvas .document {
+  width: min(860px, calc(100vw - 44px));
+  box-shadow: 0 12px 34px rgba(0,0,0,.25);
+}
+.editorAiPanel { top: 0; height: 100dvh; }
+
+@media (pointer: coarse) {
+  .itemMoreButton { opacity: 1; }
+  .libraryContentWide .documentGrid { grid-template-columns: repeat(auto-fill, minmax(145px, 170px)); }
+  .modernTool { min-width: 56px; width: 56px; height: 42px; }
+}
+@media (max-width: 980px) {
+  .libraryTopbarFull {
+    grid-template-columns: auto minmax(180px, 1fr) auto;
+    gap: 10px;
+  }
+  .libraryQuickNav { display: none; }
+  .libraryContentWide { width: calc(100vw - 34px); }
+}
+@media (max-width: 700px) {
+  .libraryTopbarFull {
+    height: calc(64px + env(safe-area-inset-top));
+    grid-template-columns: auto minmax(100px,1fr) auto;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .libraryWordmark > span:last-child { display: none; }
+  .libraryTopbarFull .newLibraryButton { font-size: 0; width: 40px; padding: 0; }
+  .libraryTopbarFull .newLibraryButton::after { content: "+"; font-size: 20px; }
+  .themeQuickButton { display: none; }
+  .libraryContentWide { width: calc(100vw - 24px); padding-top: 22px; }
+  .libraryContentWide .documentGrid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px 12px; }
+  .folderVisual { height: 92px; }
+  .notebookCover { width: min(132px, 90%); height: 164px; }
+  .sectionHeadingWithHint > span { display: none; }
+
+  .editorHeader {
+    height: calc(92px + env(safe-area-inset-top)) !important;
+    grid-template-columns: auto minmax(90px,1fr) auto !important;
+  }
+  .floatingToolDock.nestedDock {
+    top: calc(92px + env(safe-area-inset-top));
+  }
+  .primaryToolRow { justify-content: flex-start; }
+  .contextToolRow { justify-content: flex-start; }
+  .focusCanvas { padding-top: 12px !important; }
+}
