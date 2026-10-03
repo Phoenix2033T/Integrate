@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "AI-native notes and study tools for every subject",
     start_url: "/",
     display: "standalone",
-    background_color: "#f4f5f7",
-    theme_color: "#17191d",
+    background_color: "#edf7ff",
+    theme_color: "#1677c8",
     icons: [
       {
         src: "/integrate-mark.svg",
