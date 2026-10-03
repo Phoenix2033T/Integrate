@@ -1,0 +1,120 @@
+<Window
+    x:Class="Integrate.Windows.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
+    Title="Integrate">
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260"/>
+            <ColumnDefinition Width="260"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,1,0">
+            <Grid Padding="16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Border Width="38" Height="38" CornerRadius="10" Background="#17191D">
+                        <TextBlock Text="∫" Foreground="White" FontSize="26" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel>
+                        <TextBlock Text="Integrate" FontWeight="Bold" FontSize="18"/>
+                        <TextBlock Text="Native Windows notebook" Opacity="0.6" FontSize="11"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <Button Grid.Row="1" Margin="0,16,0,10" Content="+ New notebook" Click="NewNotebook_Click"/>
+
+                <ListView Grid.Row="2" x:Name="NotebooksList" SelectionChanged="NotebooksList_SelectionChanged">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding Folder}" FontSize="11" Opacity="0.6"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
+        </Border>
+
+        <Border Grid.Column="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,1,0">
+            <Grid Padding="12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Button Content="+ New page" Click="NewPage_Click" Margin="0,0,0,10"/>
+                <ListView Grid.Row="1" x:Name="PagesList" SelectionChanged="PagesList_SelectionChanged">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="4">
+                                <TextBlock Text="{Binding DisplayTitle}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding Subject}" FontSize="11" Opacity="0.6"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Column="2" Padding="18">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <ToggleButton x:Name="InkModeButton" Content="Ink"/>
+                <Button Content="Save" Click="Save_Click"/>
+                <Button Content="★ Favorite" Click="Favorite_Click"/>
+                <Button Content="Ask AI" Click="AskAI_Click"/>
+            </StackPanel>
+
+            <Grid Grid.Row="1" Margin="0,14,0,10" ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="TitleBox" PlaceholderText="Title" TextChanged="Editor_TextChanged" FontSize="28" FontWeight="Bold"/>
+                <TextBox Grid.Column="1" x:Name="SubjectBox" PlaceholderText="Subject" TextChanged="Editor_TextChanged"/>
+            </Grid>
+
+            <Grid Grid.Row="2">
+                <TextBox
+                    x:Name="BodyBox"
+                    AcceptsReturn="True"
+                    TextWrapping="Wrap"
+                    VerticalAlignment="Stretch"
+                    HorizontalAlignment="Stretch"
+                    TextChanged="Editor_TextChanged"
+                    PlaceholderText="Start taking notes…"/>
+                <Canvas
+                    x:Name="DrawingCanvas"
+                    Background="Transparent"
+                    PointerPressed="DrawingCanvas_PointerPressed"
+                    PointerMoved="DrawingCanvas_PointerMoved"
+                    PointerReleased="DrawingCanvas_PointerReleased"/>
+            </Grid>
+
+            <Grid Grid.Row="3" Margin="0,12,0,0" ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="AIPromptBox" PlaceholderText="Ask about this page…" />
+                <Button Grid.Column="1" Content="Send" Click="AskAI_Click"/>
+                <TextBlock Grid.ColumnSpan="2" x:Name="AIAnswerText" Margin="0,42,0,0" TextWrapping="Wrap"/>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>
