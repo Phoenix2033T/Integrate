@@ -581,3 +581,277 @@ button, input, textarea, select { font: inherit; }
 .mathResult small {
   opacity: .72;
 }
+
+
+/* Integrate blue appearance system */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #edf7ff;
+  --panel: #f8fcff;
+  --panel-strong: #ffffff;
+  --surface: #ffffff;
+  --surface-soft: #e7f4ff;
+  --surface-hover: #dcefff;
+  --ink: #102a43;
+  --ink-soft: #294b68;
+  --muted: #65829b;
+  --line: #cfe4f5;
+  --line-strong: #acd2ee;
+  --accent: #1677c8;
+  --accent-hover: #0d65ad;
+  --accentSoft: #dcefff;
+  --accent-text: #075a9d;
+  --paper: #ffffff;
+  --paper-ink: #1d3850;
+  --paper-line: #d9ebf8;
+  --topbar: rgba(244, 251, 255, .92);
+  --shadow: rgba(29, 91, 138, .10);
+  --input: #ffffff;
+  --ai-surface: #f2f9ff;
+  --danger: #b42318;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #061521;
+  --panel: #0a1d2d;
+  --panel-strong: #0d2437;
+  --surface: #102a40;
+  --surface-soft: #102e47;
+  --surface-hover: #153954;
+  --ink: #eaf6ff;
+  --ink-soft: #c9e4f7;
+  --muted: #88abc4;
+  --line: #1c405b;
+  --line-strong: #2b5b7c;
+  --accent: #67b9ff;
+  --accent-hover: #8acaff;
+  --accentSoft: #123b5b;
+  --accent-text: #8dccff;
+  --paper: #0c2234;
+  --paper-ink: #dceefa;
+  --paper-line: #173b56;
+  --topbar: rgba(8, 27, 42, .92);
+  --shadow: rgba(0, 0, 0, .30);
+  --input: #0e293e;
+  --ai-surface: #0b2133;
+  --danger: #ff8d86;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  transition: background-color .2s ease, color .2s ease;
+}
+
+.sidebar, .aiPanel {
+  background: var(--panel);
+  color: var(--ink);
+}
+.workspace { background: var(--bg); }
+
+.brandMark {
+  background: linear-gradient(145deg, #0d6ebc, #45a9f3);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(21, 119, 200, .22);
+}
+.primary {
+  background: var(--accent);
+  color: #fff;
+}
+.primary:hover:not(:disabled) { background: var(--accent-hover); }
+
+.secondaryIcon,
+.search,
+.tool,
+.paperSelect,
+.colorControl,
+.contextPill,
+.aiSuggestionGrid button,
+.revisionChip,
+.recognizedInkHeader button,
+.mathChecker input,
+.aiComposer textarea {
+  background: var(--input);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+.themeSwitcher {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-top: 10px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-soft);
+}
+.themeChoice {
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.themeChoice:hover { color: var(--ink); background: var(--surface-hover); }
+.themeChoice.active {
+  color: var(--accent-text);
+  background: var(--surface);
+  box-shadow: 0 1px 5px var(--shadow);
+}
+
+.search::placeholder,
+.titleInput::placeholder,
+.subjectInput::placeholder,
+.editor::placeholder,
+.aiComposer textarea::placeholder,
+.mathChecker input::placeholder,
+.tagInput::placeholder {
+  color: var(--muted);
+}
+
+.search:focus, .titleInput:focus, .subjectInput:focus, .editor:focus,
+.aiComposer textarea:focus, .notebookHeader input:focus, .mathChecker input:focus {
+  border-color: var(--line-strong);
+  box-shadow: 0 0 0 3px var(--accentSoft);
+}
+
+.notebookRow:hover, .pageCard:hover { background: var(--surface-hover); }
+.notebookRow.active, .pageCard.active {
+  background: var(--accentSoft);
+  color: var(--ink);
+}
+.count {
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+.notebookHeader input, .folderInput, .tagInput {
+  color: var(--ink);
+}
+.folderInput:focus, .tagInput:focus {
+  border-color: var(--line-strong);
+  background: var(--input);
+}
+
+.topbar {
+  background: var(--topbar);
+  border-color: var(--line);
+  box-shadow: 0 4px 18px var(--shadow);
+}
+.tool.active {
+  background: var(--accentSoft);
+  border-color: var(--line-strong);
+  color: var(--accent-text);
+}
+.aiButton {
+  color: var(--accent-text);
+  border-color: var(--line-strong);
+}
+.linkButton, .subjectInput, .tagPill { color: var(--accent-text); }
+
+.document {
+  background-color: var(--paper);
+  border-color: var(--line);
+  box-shadow: 0 14px 40px var(--shadow);
+}
+.documentMeta {
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+}
+.titleInput, .subjectInput, .editor {
+  color: var(--paper-ink);
+}
+.editor { color: var(--paper-ink); }
+.editor.drawingMode { color: color-mix(in srgb, var(--paper-ink) 72%, transparent); }
+
+.paper-blank { background-color: var(--paper); }
+.paper-lined {
+  background-color: var(--paper);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 31px,
+    var(--paper-line) 32px
+  );
+}
+.paper-grid {
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--paper-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--paper-line) 1px, transparent 1px);
+}
+.paper-dots {
+  background-color: var(--paper);
+  background-image: radial-gradient(circle, var(--paper-line) 1.25px, transparent 1.35px);
+}
+
+.contextPill.active {
+  background: var(--accentSoft);
+  border-color: var(--line-strong);
+  color: var(--accent-text);
+}
+.aiSuggestionGrid button:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-hover);
+}
+.aiMessage, .tagPill {
+  background: var(--surface-soft);
+  color: var(--ink-soft);
+}
+.aiResponseText { color: var(--ink-soft); }
+.aiStatus {
+  background: var(--accentSoft);
+  border-color: var(--line-strong);
+  color: var(--accent-text);
+}
+
+.attachmentCard {
+  background: var(--surface);
+  border-color: var(--line);
+}
+.fileIcon {
+  background: var(--accentSoft);
+  color: var(--accent-text);
+}
+
+.recognizedInkCard, .mathChecker {
+  background: var(--ai-surface);
+  border-color: var(--line-strong);
+}
+.recognizedInkCard pre { color: var(--ink-soft); }
+
+:root[data-theme="dark"] .favoriteButton.favorite {
+  color: #ffe38a;
+  background: #3a3315;
+  border-color: #6d5c1d;
+}
+:root[data-theme="dark"] .recognitionError,
+:root[data-theme="dark"] .aiError {
+  background: #3a191c;
+  border-color: #6f3034;
+  color: #ffb4ae;
+}
+:root[data-theme="dark"] .mathResult.correct {
+  background: #123526;
+  border-color: #256444;
+  color: #9ce7ba;
+}
+:root[data-theme="dark"] .mathResult.incorrect {
+  background: #3b2919;
+  border-color: #70502f;
+  color: #ffc18d;
+}
+:root[data-theme="dark"] .colorControl input { color-scheme: dark; }
+:root[data-theme="dark"] .inkCanvas { filter: saturate(.92) brightness(1.05); }
+
+@media (max-width: 760px) {
+  .themeSwitcher { margin-bottom: 6px; }
+}
