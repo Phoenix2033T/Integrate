@@ -4,6 +4,8 @@ export type AiScope = "page" | "notebook" | "all";
 export type InkPoint = {
   x: number;
   y: number;
+  /** Pen pressure from a supported stylus, normalized to 0..1. */
+  pressure?: number;
 };
 
 export type InkStroke = {
@@ -13,6 +15,11 @@ export type InkStroke = {
   width: number;
   opacity: number;
   points: InkPoint[];
+  /** Optional settings preserve compatibility with earlier saved strokes. */
+  penStyle?: "fountain" | "ballpoint" | "brush" | "pencil";
+  tipSharpness?: number;
+  pressureSensitivity?: number;
+  tipFlatness?: number;
 };
 
 export type NoteAttachment = {
