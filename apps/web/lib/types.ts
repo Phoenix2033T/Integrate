@@ -38,6 +38,7 @@ export type Page = {
   title: string;
   subject: string;
   body: string;
+  recognizedInk: string;
   paper: PaperStyle;
   strokes: InkStroke[];
   tags: string[];
