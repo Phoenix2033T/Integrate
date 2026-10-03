@@ -770,7 +770,7 @@ export default function Home() {
                   <button
                     key={name}
                     className={`tool writingTool ${tool === name ? "active" : ""}`}
-                    onClick={() => setTool(name)}
+                    onClick={() => { setTool(name); if (name === "pen") setInkWidth(3.4); if (name === "highlighter") setInkWidth(22); }}
                     title={name === "pen" ? "Pen" : name === "highlighter" ? "Highlighter" : name === "eraser" ? "Eraser" : "Text"}
                   >
                     <span className="toolIcon" aria-hidden="true">{name === "pen" ? "✎" : name === "highlighter" ? "▰" : name === "eraser" ? "◇" : "T"}</span>
