@@ -1,0 +1,30 @@
+name: Integrate
+options:
+  bundleIdPrefix: com.phoenix2033t
+  deploymentTarget:
+    iOS: "18.0"
+    macOS: "15.0"
+
+targets:
+  Integrate-iOS:
+    type: application
+    platform: iOS
+    sources:
+      - IntegrateApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.phoenix2033t.integrate
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: 6.0
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+  Integrate-macOS:
+    type: application
+    platform: macOS
+    sources:
+      - IntegrateApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.phoenix2033t.integrate.mac
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: 6.0
