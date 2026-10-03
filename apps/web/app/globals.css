@@ -1119,3 +1119,347 @@ html, body {
   padding-top: 10px;
 }
 .pageDetailsActions .tool { font-size: 11px; }
+
+
+/* =========================================================
+   Integrate Library + Focus Notebook — iPad-first UI
+   ========================================================= */
+.libraryShell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  background: var(--bg);
+  color: var(--ink);
+}
+.librarySidebar {
+  min-height: 100vh;
+  padding: 18px 14px;
+  background: color-mix(in srgb, var(--panel) 94%, var(--ink) 6%);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.libraryBrand { padding: 4px 7px 18px; }
+.libraryNav, .treeFolder {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  border-radius: 11px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 650;
+}
+.libraryNav:hover, .treeFolder:hover { background: var(--surface-hover); }
+.libraryNav.active { background: var(--surface-soft); color: var(--ink); }
+.librarySidebarLabel {
+  margin: 18px 11px 5px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.folderTree { display: grid; gap: 3px; }
+.treeDot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+.sidebarBottom { margin-top: auto; }
+.libraryMain { min-width: 0; min-height: 100vh; }
+.libraryTopbar {
+  height: 68px;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  backdrop-filter: blur(18px);
+}
+.librarySearch {
+  width: min(480px, 48vw);
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--input);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  color: var(--muted);
+}
+.librarySearch input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; }
+.libraryTopActions { display: flex; gap: 8px; align-items: center; }
+.libraryIconButton, .subtleButton {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-soft);
+  border-radius: 10px;
+  min-height: 38px;
+  padding: 0 12px;
+  cursor: pointer;
+}
+.newLibraryButton { min-height: 40px; border-radius: 11px; }
+.libraryContent { padding: 34px clamp(24px, 4vw, 64px) 70px; }
+.libraryHeadingRow { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; }
+.libraryHeadingRow h1 { margin: 5px 0 8px; font-size: clamp(28px, 3vw, 40px); letter-spacing: -.035em; }
+.breadcrumbs { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 12px; }
+.breadcrumbs button { border: 0; background: transparent; color: inherit; cursor: pointer; padding: 0; }
+.sectionTitle { margin: 26px 0 13px; font-size: 16px; letter-spacing: -.01em; }
+.documentGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 22px;
+  align-items: start;
+}
+.folderGrid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+.folderTile, .notebookTile, .emptyCreateTile {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+}
+.folderTile strong, .notebookTile strong, .emptyCreateTile strong { display: block; margin: 9px 4px 2px; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.folderTile small, .notebookTile small, .emptyCreateTile small { display: block; margin: 0 4px; color: var(--muted); font-size: 10px; }
+.folderVisual {
+  --folder-color: #5aa9e6;
+  height: 105px;
+  border-radius: 16px;
+  position: relative;
+  background: color-mix(in srgb, var(--folder-color) 78%, white 22%);
+  box-shadow: 0 7px 18px var(--shadow);
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+.folderVisual::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: -10px;
+  width: 46%;
+  height: 26px;
+  border-radius: 13px 13px 0 0;
+  background: color-mix(in srgb, var(--folder-color) 86%, white 14%);
+}
+.folderVisual span { position: absolute; right: 12px; top: 10px; color: rgba(255,255,255,.75); font-size: 20px; }
+.folderTile:hover .folderVisual, .notebookTile:hover .notebookCover { transform: translateY(-3px); box-shadow: 0 12px 26px var(--shadow); }
+.notebookCover {
+  --notebook-color: #5aa9e6;
+  height: 170px;
+  border-radius: 10px 16px 16px 10px;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.16) 0 9px, transparent 9px),
+    linear-gradient(145deg, color-mix(in srgb, var(--notebook-color) 92%, white 8%), var(--notebook-color));
+  box-shadow: 0 8px 20px var(--shadow);
+  position: relative;
+  overflow: hidden;
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+.notebookCover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, rgba(255,255,255,.16), transparent 35%);
+}
+.coverEmoji { position: absolute; left: 50%; top: 44%; transform: translate(-50%,-50%); font-size: 32px; color: white; z-index: 1; }
+.coverLines { position: absolute; left: 28px; right: 20px; bottom: 30px; height: 2px; background: rgba(255,255,255,.4); box-shadow: 0 8px 0 rgba(255,255,255,.23); }
+.emptyCreateTile {
+  min-height: 170px;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: 14px;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  color: var(--muted);
+  font-size: 24px;
+}
+.emptyCreateTile strong, .emptyCreateTile small { text-align: center; }
+
+/* Focus notebook */
+.editorShell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  background: #20262d;
+  color: var(--ink);
+}
+.editorShell.withAI { grid-template-columns: minmax(0, 1fr) 330px; }
+.notebookWorkspace { min-width: 0; min-height: 100vh; position: relative; }
+.editorHeader {
+  height: 62px;
+  display: grid;
+  grid-template-columns: auto minmax(150px, 220px) minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 8px;
+  padding: 0 12px;
+  background: color-mix(in srgb, var(--panel-strong) 94%, black 6%);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.backButton {
+  align-self: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 25px;
+  cursor: pointer;
+}
+.notebookTitleBlock { min-width: 0; align-self: center; display: grid; gap: 1px; }
+.notebookTitleBlock input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 13px; font-weight: 800; }
+.notebookTitleBlock span { color: var(--muted); font-size: 9px; }
+.pageTabs { display: flex; min-width: 0; overflow-x: auto; align-items: stretch; }
+.pageTabs button {
+  min-width: 115px;
+  max-width: 175px;
+  padding: 0 14px;
+  border: 0;
+  border-left: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.pageTabs button.active { background: var(--surface-soft); color: var(--ink); box-shadow: inset 0 -3px 0 var(--accent); }
+.pageTabs .addTab { min-width: 44px; font-size: 18px; }
+.editorHeaderActions { display: flex; align-items: center; gap: 6px; }
+.editorHeaderActions button { height: 36px; min-width: 38px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.editorHeaderActions .aiHeaderButton { padding: 0 12px; color: var(--accent-text); }
+
+.floatingToolDock {
+  position: sticky;
+  top: 74px;
+  z-index: 45;
+  width: max-content;
+  max-width: calc(100vw - 40px);
+  margin: 12px auto -118px;
+  border: 1px solid color-mix(in srgb, var(--line) 75%, white 25%);
+  border-radius: 16px;
+  background: color-mix(in srgb, #10161d 94%, transparent);
+  color: #eaf6ff;
+  box-shadow: 0 12px 34px rgba(0,0,0,.32);
+  backdrop-filter: blur(18px);
+  overflow-x: auto;
+}
+.toolDockRow, .toolOptionsRow { display: flex; align-items: center; padding: 6px 8px; gap: 3px; min-width: max-content; }
+.toolDockRow { border-bottom: 1px solid rgba(255,255,255,.12); }
+.dockTool {
+  width: 54px;
+  min-height: 47px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #dbe9f3;
+  display: grid;
+  place-items: center;
+  gap: 1px;
+  cursor: pointer;
+}
+.dockTool span { font-size: 18px; line-height: 20px; }
+.dockTool small { font-size: 7px; opacity: .72; }
+.dockTool:hover { background: rgba(255,255,255,.08); }
+.dockTool.active { background: #153f60; color: #8dccff; box-shadow: inset 0 -2px 0 #67b9ff; }
+.toolOptionsRow { min-height: 45px; }
+.roundColor { width: 31px; height: 31px; border-radius: 50%; border: 2px solid #dbe9f3; padding: 2px; cursor: pointer; }
+.roundColor input { position: absolute; opacity: 0; pointer-events: none; }
+.roundColor span { display: block; width: 100%; height: 100%; border-radius: 50%; }
+.colorDot { width: 23px; height: 23px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
+.colorDot.active { outline: 2px solid #8dccff; outline-offset: 2px; }
+.dockDivider { width: 1px; height: 28px; background: rgba(255,255,255,.16); margin: 0 5px; }
+.widthDot, .dockAction {
+  min-width: 31px; height: 31px; border: 0; border-radius: 9px; background: rgba(255,255,255,.06); color: #eaf6ff; display: grid; place-items: center; cursor: pointer;
+}
+.widthDot i { display: block; border-radius: 50%; background: currentColor; }
+.widthDot.active { outline: 2px solid #67b9ff; }
+.dockAction.textAction { width: auto; padding: 0 9px; font-size: 9px; }
+.toolOptionsRow select { height: 31px; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; background: #17212a; color: #eaf6ff; padding: 0 7px; }
+.toolToast {
+  position: fixed;
+  z-index: 70;
+  left: 50%;
+  top: 194px;
+  transform: translateX(-50%);
+  max-width: 540px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  background: #0d2437;
+  border: 1px solid #2b5b7c;
+  color: #c9e4f7;
+  font-size: 11px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.25);
+  cursor: pointer;
+}
+.focusCanvas {
+  min-height: calc(100vh - 62px);
+  padding: 142px 32px 70px;
+  display: flex;
+  justify-content: center;
+  background: #20262d;
+  overflow: auto;
+}
+.focusCanvas .document {
+  width: min(820px, 92vw);
+  min-height: 1148px;
+  border-radius: 2px;
+  box-shadow: 0 14px 40px rgba(0,0,0,.28);
+}
+.focusCanvas .pageBody,
+.focusCanvas .inkSurface,
+.focusCanvas .inkCanvas,
+.focusCanvas .editor { min-height: 1148px; }
+.editorDetails {
+  position: relative;
+  z-index: 12;
+  padding: 22px 34px 12px;
+  border-bottom: 1px solid var(--paper-line);
+  background: color-mix(in srgb, var(--paper) 96%, transparent);
+}
+.editorDetails .titleInput { font-size: 24px; }
+.editorAiPanel { position: sticky; top: 0; height: 100vh; border-left: 1px solid var(--line); }
+.attachmentCount { color: var(--muted); font-size: 11px; margin-top: 8px; }
+
+@media (max-width: 900px) {
+  .libraryShell { grid-template-columns: 210px minmax(0,1fr); }
+  .libraryContent { padding: 26px 22px 60px; }
+  .documentGrid { grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap: 16px; }
+  .notebookCover { height: 145px; }
+  .editorShell.withAI { grid-template-columns: 1fr; }
+  .editorAiPanel { position: fixed; z-index: 80; right: 0; top: 0; width: min(360px, 92vw); box-shadow: -15px 0 40px rgba(0,0,0,.3); }
+  .editorHeader { grid-template-columns: auto 150px minmax(0,1fr) auto; }
+  .floatingToolDock { max-width: calc(100vw - 20px); }
+  .dockTool { width: 48px; }
+}
+
+@media (max-width: 700px) {
+  .libraryShell { grid-template-columns: 1fr; }
+  .librarySidebar { display: none; }
+  .libraryTopbar { padding: 0 12px; }
+  .librarySearch { width: 46vw; }
+  .libraryIconButton:first-child { display: none; }
+  .libraryContent { padding: 22px 14px 50px; }
+  .editorHeader { grid-template-columns: auto minmax(90px, 1fr) auto; height: 56px; }
+  .pageTabs { grid-column: 1 / -1; order: 5; height: 42px; margin: 0 -12px; background: var(--panel); }
+  .editorHeader { height: 98px; }
+  .editorHeaderActions { grid-column: 3; }
+  .floatingToolDock { top: 108px; margin-bottom: -118px; }
+  .focusCanvas { padding: 142px 6px 40px; }
+  .focusCanvas .document { width: 100%; min-height: calc(100vh - 100px); }
+  .focusCanvas .pageBody, .focusCanvas .inkSurface, .focusCanvas .inkCanvas, .focusCanvas .editor { min-height: calc(100vh - 100px); }
+}
