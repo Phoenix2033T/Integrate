@@ -8,18 +8,25 @@ Integrate should work as an excellent normal notes app first, then add context-a
 
 ## Current milestone
 
-The repository currently contains the first runnable web MVP. It includes:
+The web client now has the second working product layer:
 
-- note creation and deletion
-- editable note titles, subjects, and content
+- notebook → page organization
+- create and rename notebooks
+- create, switch, and delete pages
+- text notes with lightweight formatting helpers
+- pen and highlighter drawing
+- click/drag stroke eraser
+- ink color selection
+- undo-last-stroke and clear-ink actions
+- blank, lined, grid, and dotted paper
 - persistent browser storage
-- note search
-- starter subject examples
-- responsive desktop/mobile layout
-- the first Integrate AI side-panel surface
-- quick actions for Summarize, Quiz me, Explain, and Find gaps
+- automatic migration from the original v1 note format
+- search across every notebook
+- responsive layout
+- AI context surface for page / notebook / all-notes scope
+- study actions including Summarize, Quiz me, Explain, Find gaps, Study guide, and Flashcards
 
-The AI buttons are intentionally UI-only in this first slice. The next backend milestone will connect them to grounded note context rather than shipping a fake chatbot response.
+The AI controls are still intentionally non-generative at this milestone. The data model is now ready for the next service layer to ground AI requests in actual page and notebook content instead of returning fake demo answers.
 
 ## Run the web app
 
@@ -66,6 +73,19 @@ packages/
 4. Study — summaries, study guides, quizzes, flashcards, practice tests, timelines, and concept maps.
 5. Multi-native — native Apple and Windows experiences plus a first-class web client.
 
+## Next layer
+
+The next major implementation layer is:
+
+- real AI request/response pipeline with page/notebook grounding
+- generated summaries, quizzes, flashcards, and study guides
+- attachments and image blocks
+- PDF import/annotation foundation
+- richer text blocks
+- folders/tags/favorites
+- autosave/status indicators and revision history
+- shared core schemas for native clients
+
 ## Status
 
-Early development. The current code is a foundation, not a completed production release.
+Early active development. The current code is a functional foundation, not a completed production release.
