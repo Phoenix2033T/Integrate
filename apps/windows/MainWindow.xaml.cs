@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using Windows.Foundation;
+using Windows.UI;
 
 namespace Integrate.Windows;
 
@@ -22,7 +23,45 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
         ExtendsContentIntoTitleBar = true;
+        ApplySavedTheme();
         _ = LoadAsync();
+    }
+
+    private static string ThemeFilePath
+    {
+        get
+        {
+            var directory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Integrate");
+            Directory.CreateDirectory(directory);
+            return Path.Combine(directory, "theme.txt");
+        }
+    }
+
+    private void ApplySavedTheme()
+    {
+        var dark = File.Exists(ThemeFilePath) &&
+                   string.Equals(File.ReadAllText(ThemeFilePath).Trim(), "dark", StringComparison.OrdinalIgnoreCase);
+        ApplyTheme(dark);
+    }
+
+    private void ApplyTheme(bool dark)
+    {
+        RootGrid.RequestedTheme = dark ? ElementTheme.Dark : ElementTheme.Light;
+        RootGrid.Background = new SolidColorBrush(
+            dark
+                ? Color.FromArgb(255, 6, 21, 33)
+                : Color.FromArgb(255, 237, 247, 255));
+        ThemeButton.Content = dark ? "☀ Light" : "☾ Dark";
+        ThemeButton.Tag = dark ? "dark" : "light";
+    }
+
+    private void ThemeButton_Click(object sender, RoutedEventArgs e)
+    {
+        var dark = !string.Equals(ThemeButton.Tag?.ToString(), "dark", StringComparison.OrdinalIgnoreCase);
+        ApplyTheme(dark);
+        File.WriteAllText(ThemeFilePath, dark ? "dark" : "light");
     }
 
     private async Task LoadAsync()
