@@ -7,6 +7,7 @@ struct ContentView: View {
 
     @State private var selectedNotebook: NotebookModel?
     @State private var selectedPage: PageModel?
+    @AppStorage("integrateAppearance") private var appearance = "light"
 
     var body: some View {
         NavigationSplitView {
@@ -20,10 +21,18 @@ struct ContentView: View {
             }
             .navigationTitle("Integrate")
             .toolbar {
-                Button {
-                    createNotebook()
-                } label: {
-                    Label("New Notebook", systemImage: "plus")
+                ToolbarItemGroup {
+                    Picker("Appearance", selection: $appearance) {
+                        Label("Light", systemImage: "sun.max").tag("light")
+                        Label("Dark", systemImage: "moon.stars").tag("dark")
+                    }
+                    .pickerStyle(.menu)
+
+                    Button {
+                        createNotebook()
+                    } label: {
+                        Label("New Notebook", systemImage: "plus")
+                    }
                 }
             }
         } content: {
