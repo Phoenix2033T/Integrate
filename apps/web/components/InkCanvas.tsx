@@ -12,6 +12,7 @@ type Props = {
   color: string;
   paper: PaperStyle;
   enabled: boolean;
+  width?: number;
 };
 
 function pathFor(points: InkPoint[]) {
@@ -22,7 +23,7 @@ function pathFor(points: InkPoint[]) {
     .join(" ");
 }
 
-export default function InkCanvas({ strokes, onChange, tool, color, paper, enabled }: Props) {
+export default function InkCanvas({ strokes, onChange, tool, color, paper, enabled, width }: Props) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [draft, setDraft] = useState<InkStroke | null>(null);
 
@@ -44,7 +45,7 @@ export default function InkCanvas({ strokes, onChange, tool, color, paper, enabl
       id: crypto.randomUUID(),
       tool: highlighter ? "highlighter" : "pen",
       color,
-      width: highlighter ? 22 : 3.4,
+      width: width ?? (highlighter ? 22 : 3.4),
       opacity: highlighter ? 0.28 : 1,
       points: [pointFromEvent(event)]
     });
