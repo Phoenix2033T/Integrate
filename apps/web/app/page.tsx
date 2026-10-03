@@ -6,21 +6,36 @@ import { strokesToSvgDataUrl } from "../lib/ink";
 import { createId } from "../lib/id";
 import type {
   AiScope,
+  Folder,
   IntegrateWorkspace,
   Notebook,
   NoteAttachment,
   Page,
-  PaperStyle,
-  Revision
+  PaperStyle
 } from "../lib/types";
 
-type Tool = "text" | "pen" | "highlighter" | "eraser";
-
-const STORAGE_KEY = "integrate.workspace.v3";
-const LEGACY_V2_KEY = "integrate.workspace.v2";
-const LEGACY_V1_KEY = "integrate.notes.v1";
-const THEME_KEY = "integrate.theme";
 type ThemeMode = "light" | "dark";
+type AppView = "home" | "notebook";
+type Tool =
+  | "fountain"
+  | "ballpoint"
+  | "pencil"
+  | "highlighter"
+  | "eraser"
+  | "lasso"
+  | "text"
+  | "shapes"
+  | "image"
+  | "tape"
+  | "ruler"
+  | "laser"
+  | "audio"
+  | "elements"
+  | "hand";
+
+const STORAGE_KEY = "integrate.workspace.v4";
+const V3_KEY = "integrate.workspace.v3";
+const THEME_KEY = "integrate.theme";
 
 function normalizePage(page: Partial<Page> & { id?: string }): Page {
   return {
@@ -39,46 +54,52 @@ function normalizePage(page: Partial<Page> & { id?: string }): Page {
   };
 }
 
+function makePage(title = "Untitled Page"): Page {
+  return normalizePage({ title });
+}
+
 const starterWorkspace: IntegrateWorkspace = {
-  version: 3,
+  version: 4,
+  folders: [
+    { id: "school", name: "School", parentId: null, color: "#5aa9e6", createdAt: Date.now() },
+    { id: "stem-folder", name: "STEM", parentId: "school", color: "#8b7cf6", createdAt: Date.now() }
+  ],
   notebooks: [
     {
       id: "general",
       title: "My Notes",
       emoji: "📘",
-      folder: "School",
+      color: "#5aa9e6",
+      folderId: "school",
+      updatedAt: Date.now(),
       pages: [
         normalizePage({
           id: "welcome",
           title: "Welcome to Integrate",
           subject: "General",
-          body:
-            "Integrate is a notebook for every subject. Type normally, draw with pen or highlighter, add tags and attachments, and use Integrate AI to study directly from your notes."
+          body: "Write naturally with your stylus, organize notebooks into folders, and use Integrate AI when you want help studying."
         }),
         normalizePage({
           id: "history",
           title: "History example",
           subject: "History",
-          body:
-            "History notes can be turned into timelines, cause-and-effect explanations, essay prompts, flashcards, quizzes, and study guides grounded in what you actually wrote.",
-          tags: ["history", "study"]
+          body: "Your handwritten and typed notes stay together in one notebook."
         })
       ]
     },
     {
       id: "stem",
-      title: "STEM",
-      emoji: "🧠",
-      folder: "School",
+      title: "Calculus",
+      emoji: "∫",
+      color: "#8b7cf6",
+      folderId: "stem-folder",
+      updatedAt: Date.now() - 3600000,
       pages: [
         normalizePage({
           id: "calculus",
-          title: "Calculus example",
+          title: "Derivatives",
           subject: "Calculus",
-          body:
-            "The STEM layer will build on normal notes with handwriting-to-math recognition, symbolic checking, graphing, explanations, and practice generation.",
-          paper: "grid",
-          tags: ["math"]
+          paper: "dots"
         })
       ]
     }
@@ -90,64 +111,43 @@ function loadWorkspace(): IntegrateWorkspace {
   if (current) {
     try {
       const parsed = JSON.parse(current) as IntegrateWorkspace;
-      if (parsed.version === 3) return parsed;
+      if (parsed.version === 4 && Array.isArray(parsed.folders) && Array.isArray(parsed.notebooks)) {
+        return {
+          ...parsed,
+          notebooks: parsed.notebooks.map((notebook) => ({
+            ...notebook,
+            folderId: notebook.folderId ?? null,
+            pages: notebook.pages.map(normalizePage)
+          }))
+        };
+      }
     } catch {}
   }
 
-  const oldV2 = window.localStorage.getItem(LEGACY_V2_KEY);
-  if (oldV2) {
+  const v3 = window.localStorage.getItem(V3_KEY);
+  if (v3) {
     try {
-      const parsed = JSON.parse(oldV2) as {
-        notebooks: Array<{
-          id: string;
-          title: string;
-          emoji: string;
-          folder?: string;
-          pages: Array<Partial<Page> & { id?: string }>;
-        }>;
+      const parsed = JSON.parse(v3) as {
+        notebooks: Array<Notebook & { folder?: string }>;
       };
-
+      const folderNames = Array.from(
+        new Set(parsed.notebooks.map((notebook) => notebook.folder || "Unfiled"))
+      );
+      const folders: Folder[] = folderNames.map((name, index) => ({
+        id: `migrated-folder-${index}-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+        name,
+        parentId: null,
+        color: ["#5aa9e6", "#8b7cf6", "#ef6f6c", "#f4a261"][index % 4],
+        createdAt: Date.now()
+      }));
       return {
-        version: 3,
+        version: 4,
+        folders,
         notebooks: parsed.notebooks.map((notebook) => ({
           ...notebook,
-          folder: notebook.folder || "Unfiled",
+          folderId: folders.find((folder) => folder.name === (notebook.folder || "Unfiled"))?.id ?? null,
           pages: notebook.pages.map(normalizePage)
         }))
-      };
-    } catch {}
-  }
-
-  const oldV1 = window.localStorage.getItem(LEGACY_V1_KEY);
-  if (oldV1) {
-    try {
-      const notes = JSON.parse(oldV1) as Array<{
-        id: string;
-        title: string;
-        subject: string;
-        content: string;
-        updatedAt: number;
-      }>;
-
-      return {
-        version: 3,
-        notebooks: [
-          {
-            id: createId(),
-            title: "Imported Notes",
-            emoji: "📥",
-            folder: "Imported",
-            pages: notes.map((note) =>
-              normalizePage({
-                id: note.id,
-                title: note.title,
-                subject: note.subject,
-                body: note.content,
-                updatedAt: note.updatedAt
-              })
-            )
-          }
-        ]
       };
     } catch {}
   }
@@ -155,48 +155,80 @@ function loadWorkspace(): IntegrateWorkspace {
   return JSON.parse(JSON.stringify(starterWorkspace)) as IntegrateWorkspace;
 }
 
-function makePage(): Page {
-  return normalizePage({ title: "Untitled Page" });
+function toolLabel(tool: Tool) {
+  const labels: Record<Tool, string> = {
+    fountain: "Fountain",
+    ballpoint: "Ballpoint",
+    pencil: "Pencil",
+    highlighter: "Highlighter",
+    eraser: "Eraser",
+    lasso: "Lasso",
+    text: "Text",
+    shapes: "Shapes",
+    image: "Image",
+    tape: "Tape",
+    ruler: "Ruler",
+    laser: "Laser",
+    audio: "Audio",
+    elements: "Elements",
+    hand: "Hand"
+  };
+  return labels[tool];
 }
 
-function bytesLabel(size: number) {
-  if (size < 1024) return `${size} B`;
-  if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+function toolIcon(tool: Tool) {
+  const icons: Record<Tool, string> = {
+    fountain: "✒",
+    ballpoint: "✎",
+    pencil: "✏",
+    highlighter: "▰",
+    eraser: "◇",
+    lasso: "◌",
+    text: "T",
+    shapes: "△",
+    image: "▧",
+    tape: "▱",
+    ruler: "📏",
+    laser: "•",
+    audio: "◉",
+    elements: "✦",
+    hand: "☝"
+  };
+  return icons[tool];
+}
+
+function descendantsOf(folderId: string, folders: Folder[]): string[] {
+  const direct = folders.filter((folder) => folder.parentId === folderId).map((folder) => folder.id);
+  return direct.flatMap((id) => [id, ...descendantsOf(id, folders)]);
 }
 
 export default function Home() {
   const [workspace, setWorkspace] = useState<IntegrateWorkspace>(starterWorkspace);
+  const [view, setView] = useState<AppView>("home");
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [selectedNotebookId, setSelectedNotebookId] = useState("general");
   const [selectedPageId, setSelectedPageId] = useState("welcome");
   const [query, setQuery] = useState("");
-  const [tool, setTool] = useState<Tool>("pen");
-  const [inkColor, setInkColor] = useState("#1f2937");
-  const [inkWidth, setInkWidth] = useState(3.4);
-  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [theme, setTheme] = useState<ThemeMode>("light");
   const [hydrated, setHydrated] = useState(false);
   const [saveState, setSaveState] = useState<"saved" | "saving">("saved");
-  const [tagDraft, setTagDraft] = useState("");
-  const [theme, setTheme] = useState<ThemeMode>("light");
+
+  const [tool, setTool] = useState<Tool>("ballpoint");
+  const [inkColor, setInkColor] = useState("#1f2937");
+  const [inkWidth, setInkWidth] = useState(3.4);
+  const [redoStrokes, setRedoStrokes] = useState<Page["strokes"]>([]);
+  const [toolMessage, setToolMessage] = useState("");
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const [aiOpen, setAiOpen] = useState(false);
   const [aiScope, setAiScope] = useState<AiScope>("page");
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiResponse, setAiResponse] = useState("");
-  const [aiError, setAiError] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
-  const [aiAction, setAiAction] = useState("");
+  const [aiError, setAiError] = useState("");
   const [recognitionLoading, setRecognitionLoading] = useState(false);
-  const [recognitionError, setRecognitionError] = useState("");
-  const [mathOpen, setMathOpen] = useState(false);
-  const [mathBefore, setMathBefore] = useState("");
-  const [mathAfter, setMathAfter] = useState("");
-  const [mathResult, setMathResult] = useState<{ equivalent: boolean; confidence: string; reason: string } | null>(null);
-  const [mathError, setMathError] = useState("");
 
-  const editorRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const workspaceImportRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem(THEME_KEY);
@@ -225,7 +257,7 @@ export default function Home() {
     const timer = window.setTimeout(() => {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(workspace));
       setSaveState("saved");
-    }, 250);
+    }, 220);
     return () => window.clearTimeout(timer);
   }, [workspace, hydrated]);
 
@@ -237,37 +269,43 @@ export default function Home() {
     selectedNotebook?.pages.find((page) => page.id === selectedPageId) ??
     selectedNotebook?.pages[0];
 
+  const currentFolder = workspace.folders.find((folder) => folder.id === currentFolderId) ?? null;
+
+  const visibleFolders = useMemo(
+    () => workspace.folders.filter((folder) => folder.parentId === currentFolderId),
+    [workspace.folders, currentFolderId]
+  );
+
+  const visibleNotebooks = useMemo(
+    () => workspace.notebooks.filter((notebook) => notebook.folderId === currentFolderId),
+    [workspace.notebooks, currentFolderId]
+  );
+
+  const recentNotebooks = useMemo(
+    () => [...workspace.notebooks].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).slice(0, 6),
+    [workspace.notebooks]
+  );
+
   const searchResults = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return null;
+    return workspace.notebooks.filter((notebook) => {
+      const pageText = notebook.pages.map((page) => `${page.title} ${page.subject} ${page.body}`).join(" ");
+      return `${notebook.title} ${pageText}`.toLowerCase().includes(q);
+    });
+  }, [query, workspace.notebooks]);
 
-    return workspace.notebooks.flatMap((notebook) =>
-      notebook.pages
-        .filter((page) => {
-          const searchable = [
-            page.title,
-            page.subject,
-            page.body,
-            page.tags.join(" "),
-            notebook.title
-          ]
-            .join(" ")
-            .toLowerCase();
-          return searchable.includes(q);
-        })
-        .map((page) => ({ notebookId: notebook.id, notebookTitle: notebook.title, page }))
-    );
-  }, [query, workspace]);
-
-  const favoriteResults = useMemo(
-    () =>
-      workspace.notebooks.flatMap((notebook) =>
-        notebook.pages
-          .filter((page) => page.favorite)
-          .map((page) => ({ notebookId: notebook.id, notebookTitle: notebook.title, page }))
-      ),
-    [workspace]
-  );
+  const breadcrumbs = useMemo(() => {
+    const result: Folder[] = [];
+    let cursor = currentFolder;
+    const seen = new Set<string>();
+    while (cursor && !seen.has(cursor.id)) {
+      seen.add(cursor.id);
+      result.unshift(cursor);
+      cursor = workspace.folders.find((folder) => folder.id === cursor?.parentId) ?? null;
+    }
+    return result;
+  }, [currentFolder, workspace.folders]);
 
   function patchPage(patch: Partial<Page>) {
     if (!selectedNotebook || !selectedPage) return;
@@ -278,25 +316,33 @@ export default function Home() {
           ? notebook
           : {
               ...notebook,
+              updatedAt: Date.now(),
               pages: notebook.pages.map((page) =>
-                page.id === selectedPage.id
-                  ? { ...page, ...patch, updatedAt: Date.now() }
-                  : page
+                page.id === selectedPage.id ? { ...page, ...patch, updatedAt: Date.now() } : page
               )
             }
       )
     }));
   }
 
-  function selectNotebook(notebook: Notebook) {
+  function openNotebook(notebook: Notebook, pageId?: string) {
     setSelectedNotebookId(notebook.id);
-    setSelectedPageId(notebook.pages[0]?.id ?? "");
+    setSelectedPageId(pageId || notebook.pages[0]?.id || "");
+    setView("notebook");
+    setRedoStrokes([]);
   }
 
-  function selectPage(notebookId: string, pageId: string) {
-    setSelectedNotebookId(notebookId);
-    setSelectedPageId(pageId);
-    setQuery("");
+  function createFolder() {
+    const name = window.prompt("Folder name", "New Folder")?.trim();
+    if (!name) return;
+    const folder: Folder = {
+      id: createId(),
+      name,
+      parentId: currentFolderId,
+      color: ["#5aa9e6", "#8b7cf6", "#ef6f6c", "#f4a261", "#58b09c"][workspace.folders.length % 5],
+      createdAt: Date.now()
+    };
+    setWorkspace((current) => ({ ...current, folders: [...current.folders, folder] }));
   }
 
   function createNotebook() {
@@ -305,26 +351,28 @@ export default function Home() {
       id: createId(),
       title: "New Notebook",
       emoji: "📓",
-      folder: "Unfiled",
-      pages: [page]
+      color: "#5aa9e6",
+      folderId: currentFolderId,
+      pages: [page],
+      updatedAt: Date.now()
     };
     setWorkspace((current) => ({ ...current, notebooks: [...current.notebooks, notebook] }));
-    setSelectedNotebookId(notebook.id);
-    setSelectedPageId(page.id);
+    openNotebook(notebook, page.id);
   }
 
   function createPage() {
     if (!selectedNotebook) return;
-    const page = makePage();
+    const page = makePage(`Page ${selectedNotebook.pages.length + 1}`);
     setWorkspace((current) => ({
       ...current,
       notebooks: current.notebooks.map((notebook) =>
         notebook.id === selectedNotebook.id
-          ? { ...notebook, pages: [...notebook.pages, page] }
+          ? { ...notebook, updatedAt: Date.now(), pages: [...notebook.pages, page] }
           : notebook
       )
     }));
     setSelectedPageId(page.id);
+    setRedoStrokes([]);
   }
 
   function patchNotebook(patch: Partial<Notebook>) {
@@ -332,65 +380,60 @@ export default function Home() {
     setWorkspace((current) => ({
       ...current,
       notebooks: current.notebooks.map((notebook) =>
-        notebook.id === selectedNotebook.id ? { ...notebook, ...patch } : notebook
+        notebook.id === selectedNotebook.id ? { ...notebook, ...patch, updatedAt: Date.now() } : notebook
       )
     }));
   }
 
-  function deletePage() {
-    if (!selectedNotebook || !selectedPage) return;
-    let remaining = selectedNotebook.pages.filter((page) => page.id !== selectedPage.id);
-    if (remaining.length === 0) remaining = [makePage()];
-
-    setWorkspace((current) => ({
-      ...current,
-      notebooks: current.notebooks.map((notebook) =>
-        notebook.id === selectedNotebook.id ? { ...notebook, pages: remaining } : notebook
-      )
-    }));
-    setSelectedPageId(remaining[0].id);
-  }
-
-  function addTag() {
-    if (!selectedPage) return;
-    const clean = tagDraft.trim().replace(/^#/, "");
-    if (!clean || selectedPage.tags.some((tag) => tag.toLowerCase() === clean.toLowerCase())) {
-      setTagDraft("");
+  function deleteFolder(folder: Folder) {
+    const nestedIds = [folder.id, ...descendantsOf(folder.id, workspace.folders)];
+    const hasContent =
+      workspace.folders.some((item) => nestedIds.includes(item.parentId || "")) ||
+      workspace.notebooks.some((notebook) => nestedIds.includes(notebook.folderId || ""));
+    if (hasContent) {
+      window.alert("This folder contains notebooks or subfolders. Move them before deleting it.");
       return;
     }
-    patchPage({ tags: [...selectedPage.tags, clean] });
-    setTagDraft("");
+    setWorkspace((current) => ({
+      ...current,
+      folders: current.folders.filter((item) => item.id !== folder.id)
+    }));
   }
 
-  function saveRevision() {
-    if (!selectedPage) return;
-    const revision: Revision = {
-      id: createId(),
-      title: selectedPage.title,
-      subject: selectedPage.subject,
-      body: selectedPage.body,
-      createdAt: Date.now()
-    };
-    patchPage({ revisions: [revision, ...selectedPage.revisions].slice(0, 10) });
+  function selectTool(next: Tool) {
+    setTool(next);
+    setToolMessage("");
+    if (next === "fountain") setInkWidth(4.2);
+    if (next === "ballpoint") setInkWidth(3.4);
+    if (next === "pencil") setInkWidth(2.4);
+    if (next === "highlighter") setInkWidth(22);
+    if (["lasso", "shapes", "tape", "ruler", "laser", "audio", "elements", "hand"].includes(next)) {
+      setToolMessage(`${toolLabel(next)} is in the toolbar foundation; its advanced interaction is the next engine layer.`);
+    }
+    if (next === "image") fileInputRef.current?.click();
   }
 
-  function restoreRevision(revision: Revision) {
-    patchPage({
-      title: revision.title,
-      subject: revision.subject,
-      body: revision.body
-    });
+  function undoInk() {
+    if (!selectedPage?.strokes.length) return;
+    const last = selectedPage.strokes[selectedPage.strokes.length - 1];
+    setRedoStrokes((current) => [...current, last]);
+    patchPage({ strokes: selectedPage.strokes.slice(0, -1) });
+  }
+
+  function redoInk() {
+    if (!selectedPage || !redoStrokes.length) return;
+    const stroke = redoStrokes[redoStrokes.length - 1];
+    patchPage({ strokes: [...selectedPage.strokes, stroke] });
+    setRedoStrokes((current) => current.slice(0, -1));
   }
 
   async function addAttachments(files: FileList | null) {
     if (!files || !selectedPage) return;
     const next: NoteAttachment[] = [];
-
     for (const file of Array.from(files)) {
       const isImage = file.type.startsWith("image/");
       const isPdf = file.type === "application/pdf";
       if (!isImage && !isPdf) continue;
-
       let dataUrl: string | undefined;
       if (file.size <= 1_500_000) {
         dataUrl = await new Promise<string>((resolve, reject) => {
@@ -400,7 +443,6 @@ export default function Home() {
           reader.readAsDataURL(file);
         });
       }
-
       next.push({
         id: createId(),
         name: file.name,
@@ -411,7 +453,6 @@ export default function Home() {
         createdAt: Date.now()
       });
     }
-
     patchPage({ attachments: [...selectedPage.attachments, ...next] });
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
@@ -421,54 +462,29 @@ export default function Home() {
       [
         `PAGE: ${page.title}`,
         `SUBJECT: ${page.subject}`,
-        page.tags.length ? `TAGS: ${page.tags.join(", ")}` : "",
         page.body,
-        page.recognizedInk ? `RECOGNIZED HANDWRITING:\n${page.recognizedInk}` : "",
-        page.strokes.length && !page.recognizedInk
-          ? `[This page also contains ${page.strokes.length} handwritten/drawn ink strokes that have not been transcribed yet.]`
-          : "",
-        page.attachments.length
-          ? `ATTACHMENTS: ${page.attachments.map((attachment) => attachment.name).join(", ")}`
-          : ""
-      ]
-        .filter(Boolean)
-        .join("\n");
+        page.recognizedInk ? `RECOGNIZED HANDWRITING:\n${page.recognizedInk}` : ""
+      ].filter(Boolean).join("\n");
 
     if (!selectedPage || !selectedNotebook) return "";
     if (scope === "page") return renderPage(selectedPage);
-    if (scope === "notebook") {
-      return [
-        `NOTEBOOK: ${selectedNotebook.title}`,
-        ...selectedNotebook.pages.map(renderPage)
-      ].join("\n\n");
-    }
-
+    if (scope === "notebook") return selectedNotebook.pages.map(renderPage).join("\n\n");
     return workspace.notebooks
-      .map((notebook) =>
-        [`NOTEBOOK: ${notebook.title}`, ...notebook.pages.map(renderPage)].join("\n\n")
-      )
+      .map((notebook) => `NOTEBOOK: ${notebook.title}\n${notebook.pages.map(renderPage).join("\n\n")}`)
       .join("\n\n=====\n\n");
   }
 
-  async function askAi(promptOverride?: string, action = "") {
-    const prompt = (promptOverride ?? aiPrompt).trim();
+  async function askAi() {
+    const prompt = aiPrompt.trim();
     if (!prompt) return;
-
     setAiLoading(true);
     setAiError("");
     setAiResponse("");
-    setAiAction(action);
-
     try {
       const response = await fetch("/api/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt,
-          action,
-          scope: aiScope,
-          context: buildAiContext(aiScope)
-        })
+        body: JSON.stringify({ prompt, scope: aiScope, context: buildAiContext(aiScope) })
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "AI request failed.");
@@ -480,23 +496,9 @@ export default function Home() {
     }
   }
 
-  function runQuickAction(action: string) {
-    const prompts: Record<string, string> = {
-      Summarize: "Summarize these notes into the most important ideas I should remember.",
-      "Quiz me": "Create a quiz from these notes. Mix multiple choice and short answer. Do not give the answers until the end.",
-      Explain: "Teach me the ideas in these notes clearly, assuming I am learning them for a test.",
-      "Find gaps": "Find important gaps, unclear points, or missing connections in these notes. Separate what is definitely missing from what might be worth adding.",
-      "Study guide": "Create a structured study guide from these notes with key concepts, definitions, relationships, and likely testable details.",
-      Flashcards: "Create concise flashcards from these notes in Question — Answer format."
-    };
-    setAiPrompt(prompts[action]);
-    void askAi(prompts[action], action);
-  }
-
   async function recognizeInk() {
-    if (!selectedPage || selectedPage.strokes.length === 0) return;
+    if (!selectedPage?.strokes.length) return;
     setRecognitionLoading(true);
-    setRecognitionError("");
     try {
       const response = await fetch("/api/recognize", {
         method: "POST",
@@ -509,495 +511,216 @@ export default function Home() {
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Recognition failed.");
       patchPage({ recognizedInk: payload.text });
+      setDetailsOpen(true);
     } catch (error) {
-      setRecognitionError(error instanceof Error ? error.message : "Recognition failed.");
+      window.alert(error instanceof Error ? error.message : "Recognition failed.");
     } finally {
       setRecognitionLoading(false);
     }
   }
 
-  async function checkMath() {
-    setMathError("");
-    setMathResult(null);
-    if (!mathBefore.trim() || !mathAfter.trim()) return;
-    try {
-      const response = await fetch("/api/math/check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ before: mathBefore, after: mathAfter })
-      });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "Math check failed.");
-      setMathResult(payload);
-    } catch (error) {
-      setMathError(error instanceof Error ? error.message : "Math check failed.");
-    }
-  }
+  const drawingTool =
+    tool === "highlighter" ? "highlighter" :
+    tool === "eraser" ? "eraser" :
+    "pen";
+  const drawingEnabled = ["fountain", "ballpoint", "pencil", "highlighter", "eraser"].includes(tool);
 
-  function downloadWorkspace() {
-    const blob = new Blob([JSON.stringify(workspace, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `integrate-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }
-
-  async function importWorkspace(file: File | undefined) {
-    if (!file) return;
-    try {
-      const parsed = JSON.parse(await file.text()) as Partial<IntegrateWorkspace>;
-      if (!Array.isArray(parsed.notebooks)) throw new Error("This is not an Integrate workspace backup.");
-      const notebooks: Notebook[] = parsed.notebooks.map((notebook: any) => ({
-        id: typeof notebook.id === "string" ? notebook.id : createId(),
-        title: typeof notebook.title === "string" ? notebook.title : "Imported Notebook",
-        emoji: typeof notebook.emoji === "string" ? notebook.emoji : "📓",
-        folder: typeof notebook.folder === "string" ? notebook.folder : "Imported",
-        pages: Array.isArray(notebook.pages) ? notebook.pages.map(normalizePage) : [makePage()]
-      }));
-      if (notebooks.length === 0) throw new Error("The backup contains no notebooks.");
-      const next: IntegrateWorkspace = { version: 3, notebooks };
-      setWorkspace(next);
-      setSelectedNotebookId(notebooks[0].id);
-      setSelectedPageId(notebooks[0].pages[0]?.id ?? "");
-    } catch (error) {
-      window.alert(error instanceof Error ? error.message : "Could not import this backup.");
-    } finally {
-      if (workspaceImportRef.current) workspaceImportRef.current.value = "";
-    }
-  }
-
-  function downloadMarkdown() {
-    if (!selectedPage) return;
-    const sections = [
-      `# ${selectedPage.title}`,
-      "",
-      `**Subject:** ${selectedPage.subject}`,
-      selectedPage.tags.length ? `**Tags:** ${selectedPage.tags.map((tag) => `#${tag}`).join(" ")}` : "",
-      "",
-      selectedPage.body,
-      selectedPage.recognizedInk ? `\n## Recognized handwriting\n\n${selectedPage.recognizedInk}` : ""
-    ].filter(Boolean);
-    const blob = new Blob([sections.join("\n")], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${(selectedPage.title || "note").replace(/[^a-z0-9-_]+/gi, "-")}.md`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function formatSelection(prefix: string, suffix = prefix, fallback = "text") {
-    if (!selectedPage || !editorRef.current) return;
-    const editor = editorRef.current;
-    const start = editor.selectionStart;
-    const end = editor.selectionEnd;
-    const picked = selectedPage.body.slice(start, end) || fallback;
-    patchPage({
-      body:
-        selectedPage.body.slice(0, start) +
-        prefix +
-        picked +
-        suffix +
-        selectedPage.body.slice(end)
-    });
-  }
-
-  function insertLinePrefix(prefix: string) {
-    if (!selectedPage || !editorRef.current) return;
-    const start = editorRef.current.selectionStart;
-    const lineStart = selectedPage.body.lastIndexOf("\n", Math.max(0, start - 1)) + 1;
-    patchPage({
-      body: selectedPage.body.slice(0, lineStart) + prefix + selectedPage.body.slice(lineStart)
-    });
-  }
-
-  return (
-    <main className={`shell ${aiOpen ? "" : "aiClosed"}`}>
-      <aside className="sidebar">
-        <div className="brandRow">
-          <div className="brandMark">∫</div>
-          <div>
-            <div className="brand">Integrate</div>
-            <div className="muted small">AI-native notebook</div>
+  if (view === "home") {
+    const displayedNotebooks = searchResults ?? visibleNotebooks;
+    return (
+      <main className="libraryShell">
+        <aside className="librarySidebar">
+          <div className="brand libraryBrand">
+            <div className="brandMark">∫</div>
+            <div><div className="brandName">Integrate</div><div className="muted small">Handwritten intelligence</div></div>
           </div>
-        </div>
 
-        <div className="sidebarActions">
-          <button className="primary" onClick={createPage}>+ New page</button>
-          <button className="secondaryIcon" onClick={createNotebook} title="New notebook">＋</button>
-        </div>
+          <button className="libraryNav active" onClick={() => { setCurrentFolderId(null); setQuery(""); }}>⌂ <span>Documents</span></button>
+          <button className="libraryNav" onClick={() => setQuery("★")}>☆ <span>Favorites</span></button>
+          <button className="libraryNav" onClick={() => setQuery("")}>◷ <span>Recent</span></button>
 
-        <div className="themeSwitcher" role="group" aria-label="Appearance">
-          <button
-            className={`themeChoice ${theme === "light" ? "active" : ""}`}
-            onClick={() => setTheme("light")}
-            aria-pressed={theme === "light"}
-            title="Use light mode"
-          >
-            <span aria-hidden="true">☀</span>
-            Light
-          </button>
-          <button
-            className={`themeChoice ${theme === "dark" ? "active" : ""}`}
-            onClick={() => setTheme("dark")}
-            aria-pressed={theme === "dark"}
-            title="Use dark mode"
-          >
-            <span aria-hidden="true">☾</span>
-            Dark
-          </button>
-        </div>
+          <div className="librarySidebarLabel">Folders</div>
+          <div className="folderTree">
+            {workspace.folders.filter((folder) => folder.parentId === null).map((folder) => (
+              <button key={folder.id} className="treeFolder" onClick={() => { setCurrentFolderId(folder.id); setQuery(""); }}>
+                <span className="treeDot" style={{ background: folder.color }} />{folder.name}
+              </button>
+            ))}
+          </div>
 
-        <input
-          className="search"
-          placeholder="Search notes, subjects, tags"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
-
-        {favoriteResults.length > 0 && !query && (
-          <>
-            <div className="sectionLabel">Favorites</div>
-            <div className="pageList">
-              {favoriteResults.map((result) => (
-                <button
-                  key={result.page.id}
-                  className="pageCard"
-                  onClick={() => selectPage(result.notebookId, result.page.id)}
-                >
-                  <span className="pageTitle">★ {result.page.title}</span>
-                  <span className="pageMeta">{result.notebookTitle}</span>
-                </button>
-              ))}
+          <div className="sidebarBottom">
+            <div className="themeSwitcher" role="group" aria-label="Appearance">
+              <button className={`themeChoice ${theme === "light" ? "active" : ""}`} onClick={() => setTheme("light")}>☀ Light</button>
+              <button className={`themeChoice ${theme === "dark" ? "active" : ""}`} onClick={() => setTheme("dark")}>☾ Dark</button>
             </div>
-          </>
-        )}
+          </div>
+        </aside>
 
-        {searchResults ? (
-          <>
-            <div className="sectionLabel">Search results</div>
-            <div className="pageList">
-              {searchResults.length === 0 && <div className="emptySearch">No matching notes</div>}
-              {searchResults.map((result) => (
-                <button
-                  key={result.page.id}
-                  className="pageCard"
-                  onClick={() => selectPage(result.notebookId, result.page.id)}
-                >
-                  <span className="pageTitle">{result.page.title}</span>
-                  <span className="pageMeta">{result.notebookTitle} · {result.page.subject}</span>
-                </button>
-              ))}
+        <section className="libraryMain">
+          <header className="libraryTopbar">
+            <div className="librarySearch">⌕<input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search notebooks and notes" /></div>
+            <div className="libraryTopActions">
+              <button className="libraryIconButton" title="Grid view">▦</button>
+              <button className="primary newLibraryButton" onClick={createNotebook}>＋ New notebook</button>
+              <button className="libraryIconButton" onClick={createFolder} title="New folder">📁＋</button>
             </div>
-          </>
-        ) : (
-          <>
-            <div className="sectionLabel">Notebooks</div>
-            <div className="notebookList">
-              {workspace.notebooks.map((notebook) => (
-                <button
-                  key={notebook.id}
-                  className={`notebookRow ${notebook.id === selectedNotebook?.id ? "active" : ""}`}
-                  onClick={() => selectNotebook(notebook)}
-                >
-                  <span>{notebook.emoji}</span>
-                  <span className="notebookName">
-                    {notebook.title}
-                    <small className="notebookFolder">{notebook.folder || "Unfiled"}</small>
-                  </span>
-                  <span className="count">{notebook.pages.length}</span>
-                </button>
-              ))}
-            </div>
+          </header>
 
-            {selectedNotebook && (
-              <>
-                <div className="notebookHeader">
-                  <input
-                    value={selectedNotebook.title}
-                    onChange={(event) => patchNotebook({ title: event.target.value })}
-                    aria-label="Notebook title"
-                  />
-                  <button onClick={createPage}>＋</button>
+          <div className="libraryContent">
+            <div className="libraryHeadingRow">
+              <div>
+                <div className="breadcrumbs">
+                  <button onClick={() => setCurrentFolderId(null)}>Documents</button>
+                  {breadcrumbs.map((folder) => <span key={folder.id}>› <button onClick={() => setCurrentFolderId(folder.id)}>{folder.name}</button></span>)}
                 </div>
-                <input
-                  className="folderInput"
-                  value={selectedNotebook.folder || ""}
-                  placeholder="Folder"
-                  onChange={(event) => patchNotebook({ folder: event.target.value })}
-                  aria-label="Notebook folder"
-                />
-                <div className="pageList">
-                  {selectedNotebook.pages.map((page) => (
-                    <button
-                      key={page.id}
-                      className={`pageCard ${page.id === selectedPage?.id ? "active" : ""}`}
-                      onClick={() => setSelectedPageId(page.id)}
-                    >
-                      <span className="pageTitle">{page.favorite ? "★ " : ""}{page.title}</span>
-                      <span className="pageMeta">{page.subject}</span>
-                    </button>
-                  ))}
+                <h1>{currentFolder?.name || "Documents"}</h1>
+              </div>
+              {currentFolder && <button className="subtleButton" onClick={() => deleteFolder(currentFolder)}>Folder options</button>}
+            </div>
+
+            {!searchResults && visibleFolders.length > 0 && (
+              <>
+                <h2 className="sectionTitle">Folders</h2>
+                <div className="documentGrid folderGrid">
+                  {visibleFolders.map((folder) => {
+                    const childCount = workspace.folders.filter((item) => item.parentId === folder.id).length;
+                    const notebookCount = workspace.notebooks.filter((item) => item.folderId === folder.id).length;
+                    return (
+                      <button className="folderTile" key={folder.id} onClick={() => setCurrentFolderId(folder.id)}>
+                        <div className="folderVisual" style={{ "--folder-color": folder.color } as React.CSSProperties}><span>☆</span></div>
+                        <strong>{folder.name}</strong>
+                        <small>{childCount} folders · {notebookCount} notebooks</small>
+                      </button>
+                    );
+                  })}
                 </div>
               </>
             )}
-          </>
-        )}
-      </aside>
 
-      <section className="workspace">
+            <h2 className="sectionTitle">{searchResults ? "Search results" : currentFolder ? "Notebooks" : "Recent notebooks"}</h2>
+            <div className="documentGrid">
+              {(searchResults ?? (currentFolder ? displayedNotebooks : recentNotebooks)).map((notebook) => (
+                <button className="notebookTile" key={notebook.id} onClick={() => openNotebook(notebook)}>
+                  <div className="notebookCover" style={{ "--notebook-color": notebook.color || "#5aa9e6" } as React.CSSProperties}>
+                    <span className="coverEmoji">{notebook.emoji}</span>
+                    <span className="coverLines" />
+                  </div>
+                  <strong>{notebook.title}</strong>
+                  <small>{notebook.pages.length} pages · {new Date(notebook.updatedAt || Date.now()).toLocaleDateString()}</small>
+                </button>
+              ))}
+              {!searchResults && currentFolder && visibleNotebooks.length === 0 && (
+                <button className="emptyCreateTile" onClick={createNotebook}>＋<strong>Create notebook</strong><small>Inside {currentFolder.name}</small></button>
+              )}
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main className={`editorShell ${aiOpen ? "withAI" : ""}`}>
+      <section className="notebookWorkspace">
+        <header className="editorHeader">
+          <button className="backButton" onClick={() => setView("home")}>‹</button>
+          <div className="notebookTitleBlock">
+            <input value={selectedNotebook?.title || ""} onChange={(event) => patchNotebook({ title: event.target.value })} aria-label="Notebook title" />
+            <span>{saveState === "saved" ? "Saved" : "Saving…"}</span>
+          </div>
+          <div className="pageTabs">
+            {selectedNotebook?.pages.slice(0, 7).map((page) => (
+              <button key={page.id} className={page.id === selectedPage?.id ? "active" : ""} onClick={() => { setSelectedPageId(page.id); setRedoStrokes([]); }}>{page.title}</button>
+            ))}
+            <button className="addTab" onClick={createPage}>＋</button>
+          </div>
+          <div className="editorHeaderActions">
+            <button onClick={() => setDetailsOpen((value) => !value)}>ⓘ</button>
+            <button className="aiHeaderButton" onClick={() => setAiOpen((value) => !value)}>✦ AI</button>
+          </div>
+        </header>
+
         {selectedPage && (
           <>
-            <div className="notebookChrome">
-              <div className="notebookIdentity">
-                <span className="notebookEmoji">{selectedNotebook?.emoji || "📓"}</span>
-                <div>
-                  <div className="chromeNotebookName">{selectedNotebook?.title}</div>
-                  <div className="chromePageName">{selectedPage.title} · Page {(selectedNotebook?.pages.findIndex((page) => page.id === selectedPage.id) ?? 0) + 1} of {selectedNotebook?.pages.length ?? 1}</div>
-                </div>
+            <div className="floatingToolDock" role="toolbar" aria-label="Notebook tools">
+              <div className="toolDockRow">
+                {(["fountain", "ballpoint", "pencil", "highlighter", "eraser", "lasso", "text", "shapes", "image", "tape", "ruler", "laser", "audio", "elements", "hand"] as Tool[]).map((name) => (
+                  <button key={name} className={`dockTool ${tool === name ? "active" : ""}`} onClick={() => selectTool(name)} title={toolLabel(name)}>
+                    <span>{toolIcon(name)}</span><small>{toolLabel(name)}</small>
+                  </button>
+                ))}
               </div>
-              <div className="chromeActions">
-                <span className={`saveState ${saveState}`}>{saveState === "saved" ? "Saved" : "Saving…"}</span>
-                <button className="chromeButton" onClick={() => setDetailsOpen((value) => !value)}>{detailsOpen ? "Hide details" : "Page details"}</button>
-                <button className="chromeButton aiButton" onClick={() => setAiOpen((value) => !value)}>✦ AI</button>
+              <div className="toolOptionsRow">
+                <label className="roundColor" title="Ink color"><input type="color" value={inkColor} onChange={(event) => setInkColor(event.target.value)} /><span style={{ background: inkColor }} /></label>
+                {["#1f2937", "#1677c8", "#ef4444", "#f59e0b", "#22c55e", "#8b5cf6"].map((color) => (
+                  <button key={color} className={`colorDot ${inkColor === color ? "active" : ""}`} style={{ background: color }} onClick={() => setInkColor(color)} aria-label={`Use ${color}`} />
+                ))}
+                <div className="dockDivider" />
+                {[2.4, 3.4, 5.2].map((width) => <button key={width} className={`widthDot ${Math.abs(inkWidth - width) < .2 ? "active" : ""}`} onClick={() => setInkWidth(width)}><i style={{ width: Math.max(5, width * 2), height: Math.max(5, width * 2) }} /></button>)}
+                <div className="dockDivider" />
+                <button className="dockAction" onClick={undoInk} disabled={!selectedPage.strokes.length}>↶</button>
+                <button className="dockAction" onClick={redoInk} disabled={!redoStrokes.length}>↷</button>
+                <button className="dockAction textAction" onClick={() => void recognizeInk()} disabled={!selectedPage.strokes.length || recognitionLoading}>{recognitionLoading ? "Reading…" : "Ink → Text"}</button>
+                <select value={selectedPage.paper} onChange={(event) => patchPage({ paper: event.target.value as PaperStyle })}>
+                  <option value="blank">Blank</option><option value="lined">Ruled</option><option value="grid">Grid</option><option value="dots">Dots</option>
+                </select>
               </div>
             </div>
 
-            <header className="topbar handwritingToolbar">
-              <div className="toolGroup primaryTools" role="toolbar" aria-label="Writing tools">
-                {(["pen", "highlighter", "eraser", "text"] as Tool[]).map((name) => (
-                  <button
-                    key={name}
-                    className={`tool writingTool ${tool === name ? "active" : ""}`}
-                    onClick={() => { setTool(name); if (name === "pen") setInkWidth(3.4); if (name === "highlighter") setInkWidth(22); }}
-                    title={name === "pen" ? "Pen" : name === "highlighter" ? "Highlighter" : name === "eraser" ? "Eraser" : "Text"}
-                  >
-                    <span className="toolIcon" aria-hidden="true">{name === "pen" ? "✎" : name === "highlighter" ? "▰" : name === "eraser" ? "◇" : "T"}</span>
-                    <span className="toolLabel">{name === "pen" ? "Pen" : name === "highlighter" ? "Highlighter" : name === "eraser" ? "Eraser" : "Text"}</span>
-                  </button>
-                ))}
-                {tool !== "text" && tool !== "eraser" && (
-                  <>
-                    <label className="colorControl inkColorControl" title="Ink color">
-                      <input type="color" value={inkColor} onChange={(event) => setInkColor(event.target.value)} />
-                    </label>
-                    <label className="strokeControl" title="Stroke thickness">
-                      <span>Thin</span>
-                      <input
-                        type="range"
-                        min={tool === "highlighter" ? 12 : 1.8}
-                        max={tool === "highlighter" ? 36 : 8}
-                        step="0.2"
-                        value={inkWidth}
-                        onChange={(event) => setInkWidth(Number(event.target.value))}
-                      />
-                      <span>Thick</span>
-                    </label>
-                  </>
-                )}
-                <div className="toolbarDivider" />
-                <button className="tool iconOnly" onClick={() => patchPage({ strokes: selectedPage.strokes.slice(0, -1) })} disabled={!selectedPage.strokes.length} title="Undo last stroke">↶</button>
-                <button className="tool" onClick={() => void recognizeInk()} disabled={!selectedPage.strokes.length || recognitionLoading}>
-                  {recognitionLoading ? "Reading…" : "Handwriting → Text"}
-                </button>
-              </div>
+            {toolMessage && <div className="toolToast" onClick={() => setToolMessage("")}>{toolMessage} ×</div>}
 
-              <div className="toolGroup secondaryTools">
-                {tool === "text" && (
-                  <>
-                    <button className="tool compact" onClick={() => formatSelection("**", "**", "bold text")}><strong>B</strong></button>
-                    <button className="tool compact" onClick={() => insertLinePrefix("## ")}>H</button>
-                    <button className="tool compact" onClick={() => insertLinePrefix("- [ ] ")}>☑</button>
-                  </>
-                )}
-                <button className="tool" onClick={() => fileInputRef.current?.click()} title="Insert image or PDF">＋ Insert</button>
-                <input ref={fileInputRef} className="hiddenInput" type="file" multiple accept="image/*,application/pdf" onChange={(event) => void addAttachments(event.target.files)} />
-                <select className="paperSelect" value={selectedPage.paper} onChange={(event) => patchPage({ paper: event.target.value as PaperStyle })} title="Paper template">
-                  <option value="blank">Blank paper</option>
-                  <option value="lined">Ruled paper</option>
-                  <option value="grid">Grid paper</option>
-                  <option value="dots">Dotted paper</option>
-                </select>
-                <button className={`tool favoriteButton ${selectedPage.favorite ? "favorite" : ""}`} onClick={() => patchPage({ favorite: !selectedPage.favorite })} title="Favorite">★</button>
-                <button className={`tool ${mathOpen ? "active" : ""}`} onClick={() => { setMathOpen((value) => !value); setAiOpen(true); }} title="Check handwritten math">Math</button>
-              </div>
-            </header>
-
-            <div className="documentWrap">
+            <div className="focusCanvas">
               <article className={`document paper-${selectedPage.paper}`}>
-                {detailsOpen && <div className="documentMeta pageDetailsSheet">
-                  <input className="titleInput" value={selectedPage.title} onChange={(event) => patchPage({ title: event.target.value })} />
-                  <input className="subjectInput" value={selectedPage.subject} onChange={(event) => patchPage({ subject: event.target.value })} />
-
-                  <div className="tagRow">
-                    {selectedPage.tags.map((tag) => (
-                      <button key={tag} className="tagPill" onClick={() => patchPage({ tags: selectedPage.tags.filter((value) => value !== tag) })}>#{tag} ×</button>
-                    ))}
-                    <input
-                      className="tagInput"
-                      placeholder="+ tag"
-                      value={tagDraft}
-                      onChange={(event) => setTagDraft(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                          event.preventDefault();
-                          addTag();
-                        }
-                      }}
-                      onBlur={addTag}
-                    />
+                {detailsOpen && (
+                  <div className="editorDetails">
+                    <input className="titleInput" value={selectedPage.title} onChange={(event) => patchPage({ title: event.target.value })} />
+                    <input className="subjectInput" value={selectedPage.subject} onChange={(event) => patchPage({ subject: event.target.value })} placeholder="Subject" />
+                    {selectedPage.recognizedInk && <div className="recognizedInkCard"><strong>Recognized handwriting</strong><pre>{selectedPage.recognizedInk}</pre></div>}
+                    {selectedPage.attachments.length > 0 && <div className="attachmentCount">{selectedPage.attachments.length} attachment(s)</div>}
                   </div>
-
-                  {recognitionError && <div className="recognitionError">{recognitionError}</div>}
-                  {selectedPage.recognizedInk && (
-                    <div className="recognizedInkCard">
-                      <div className="recognizedInkHeader">
-                        <strong>Recognized handwriting</strong>
-                        <div>
-                          <button onClick={() => patchPage({ body: [selectedPage.body, selectedPage.recognizedInk].filter(Boolean).join("\n\n") })}>Add to note</button>
-                          <button onClick={() => patchPage({ recognizedInk: "" })}>Clear</button>
-                        </div>
-                      </div>
-                      <pre>{selectedPage.recognizedInk}</pre>
-                    </div>
-                  )}
-
-                  {selectedPage.attachments.length > 0 && (
-                    <div className="attachmentGrid">
-                      {selectedPage.attachments.map((attachment) => (
-                        <div className="attachmentCard" key={attachment.id}>
-                          {attachment.type === "image" && attachment.dataUrl ? (
-                            <img src={attachment.dataUrl} alt={attachment.name} />
-                          ) : attachment.type === "pdf" && attachment.dataUrl ? (
-                            <a className="fileIcon" href={attachment.dataUrl} target="_blank" rel="noreferrer">PDF</a>
-                          ) : (
-                            <div className="fileIcon">{attachment.type === "pdf" ? "PDF" : "IMG"}</div>
-                          )}
-                          <div className="attachmentInfo">
-                            <strong>{attachment.name}</strong>
-                            <span>{bytesLabel(attachment.size)}</span>
-                          </div>
-                          <button onClick={() => patchPage({ attachments: selectedPage.attachments.filter((item) => item.id !== attachment.id) })}>×</button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="pageDetailsActions">
-                    <button className="tool" onClick={downloadMarkdown}>Export page</button>
-                    <button className="tool" onClick={downloadWorkspace}>Backup notebooks</button>
-                    <button className="tool" onClick={() => workspaceImportRef.current?.click()}>Import backup</button>
-                    <input ref={workspaceImportRef} className="hiddenInput" type="file" accept="application/json,.json" onChange={(event) => void importWorkspace(event.target.files?.[0])} />
-                    <button className="tool danger" onClick={deletePage}>Delete page</button>
-                  </div>
-
-                  <div className="versionRow">
-                    <button className="linkButton" onClick={saveRevision}>Save version</button>
-                    {selectedPage.revisions.slice(0, 3).map((revision) => (
-                      <button key={revision.id} className="revisionChip" onClick={() => restoreRevision(revision)}>
-                        {new Date(revision.createdAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
-                      </button>
-                    ))}
-                  </div>
-                </div>}
-
+                )}
                 <div className="pageBody">
                   <textarea
-                    ref={editorRef}
                     className={`editor ${tool !== "text" ? "drawingMode" : ""}`}
-                    placeholder="Start taking notes..."
+                    placeholder="Tap Text to type, or choose a pen to write."
                     value={selectedPage.body}
                     onChange={(event) => patchPage({ body: event.target.value })}
                     readOnly={tool !== "text"}
                   />
                   <InkCanvas
                     strokes={selectedPage.strokes}
-                    onChange={(strokes) => patchPage({ strokes })}
-                    tool={tool === "text" ? "pen" : tool}
+                    onChange={(strokes) => { patchPage({ strokes }); setRedoStrokes([]); }}
+                    tool={drawingTool}
                     color={inkColor}
                     paper={selectedPage.paper}
-                    enabled={tool !== "text"}
+                    enabled={drawingEnabled}
                     width={inkWidth}
                   />
                 </div>
               </article>
             </div>
+
+            <input ref={fileInputRef} className="hiddenInput" type="file" multiple accept="image/*,application/pdf" onChange={(event) => void addAttachments(event.target.files)} />
           </>
         )}
       </section>
 
       {aiOpen && selectedPage && (
-        <aside className="aiPanel">
-          <div className="aiHeader">
-            <div>
-              <div className="aiTitle">Integrate AI</div>
-              <div className="muted small">Grounded in your notes</div>
-            </div>
-            <button className="iconButton" onClick={() => setAiOpen(false)}>×</button>
-          </div>
-
+        <aside className="aiPanel editorAiPanel">
+          <div className="aiHeader"><div><div className="aiTitle">Integrate AI</div><div className="muted small">Grounded in your notes</div></div><button className="iconButton" onClick={() => setAiOpen(false)}>×</button></div>
           <div className="contextPills">
-            {(["page", "notebook", "all"] as AiScope[]).map((scope) => (
-              <button
-                key={scope}
-                className={`contextPill ${aiScope === scope ? "active" : ""}`}
-                onClick={() => setAiScope(scope)}
-              >
-                {scope === "page" ? "Page" : scope === "notebook" ? "Notebook" : "All notes"}
-              </button>
-            ))}
+            {(["page", "notebook", "all"] as AiScope[]).map((scope) => <button key={scope} className={`contextPill ${aiScope === scope ? "active" : ""}`} onClick={() => setAiScope(scope)}>{scope === "page" ? "Page" : scope === "notebook" ? "Notebook" : "All notes"}</button>)}
           </div>
-
-          {mathOpen && (
-            <div className="mathChecker">
-              <div className="mathCheckerHeader">
-                <strong>Symbolic step checker</strong>
-                <button className="iconButton smallClose" onClick={() => setMathOpen(false)}>×</button>
-              </div>
-              <input value={mathBefore} onChange={(event) => setMathBefore(event.target.value)} placeholder="Previous line, e.g. 2x + 4 = 10" />
-              <input value={mathAfter} onChange={(event) => setMathAfter(event.target.value)} placeholder="Next line, e.g. x + 2 = 5" />
-              <button className="primary" onClick={() => void checkMath()} disabled={!mathBefore.trim() || !mathAfter.trim()}>Check step</button>
-              {mathError && <div className="aiError">{mathError}</div>}
-              {mathResult && (
-                <div className={`mathResult ${mathResult.equivalent ? "correct" : "incorrect"}`}>
-                  <strong>{mathResult.equivalent ? "Equivalent step" : "Not verified"}</strong>
-                  <span>{mathResult.reason}</span>
-                  <small>Confidence: {mathResult.confidence}</small>
-                </div>
-              )}
-            </div>
-          )}
-
           <div className="aiSuggestionGrid">
-            {["Summarize", "Quiz me", "Explain", "Find gaps", "Study guide", "Flashcards"].map((label) => (
-              <button key={label} onClick={() => runQuickAction(label)} disabled={aiLoading}>{label}</button>
-            ))}
+            {["Summarize", "Quiz me", "Explain", "Find gaps", "Study guide", "Flashcards"].map((label) => <button key={label} onClick={() => setAiPrompt(label === "Quiz me" ? "Quiz me on these notes." : `${label} these notes.`)}>{label}</button>)}
           </div>
-
           <div className="aiResult">
             {aiLoading && <div className="aiStatus">Integrate AI is thinking…</div>}
             {aiError && <div className="aiError">{aiError}</div>}
-            {aiResponse && (
-              <>
-                {aiAction && <div className="aiResultLabel">{aiAction}</div>}
-                <div className="aiResponseText">{aiResponse}</div>
-              </>
-            )}
-            {!aiLoading && !aiError && !aiResponse && (
-              <div className="aiMessage">
-                Ask about this page, the whole notebook, or all of your notes. AI answers are sent with that selected context.
-              </div>
-            )}
+            {aiResponse && <div className="aiResponseText">{aiResponse}</div>}
+            {!aiLoading && !aiError && !aiResponse && <div className="aiMessage">Ask about the current page, this notebook, or all of your notes.</div>}
           </div>
-
-          <div className="aiComposer">
-            <textarea value={aiPrompt} onChange={(event) => setAiPrompt(event.target.value)} placeholder="Ask about your notes..." />
-            <button className="primary" onClick={() => void askAi()} disabled={!aiPrompt.trim() || aiLoading}>
-              {aiLoading ? "Working…" : "Send"}
-            </button>
-          </div>
+          <div className="aiComposer"><textarea value={aiPrompt} onChange={(event) => setAiPrompt(event.target.value)} placeholder="Ask about your notes…" /><button className="primary" onClick={() => void askAi()} disabled={!aiPrompt.trim() || aiLoading}>Send</button></div>
         </aside>
       )}
     </main>
