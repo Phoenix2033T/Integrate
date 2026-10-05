@@ -4,7 +4,8 @@ import { useRef, useState } from "react";
 import type { InkPoint, InkStroke, PaperStyle } from "../lib/types";
 import { createId } from "../lib/id";
 
-type Tool = "pen" | "highlighter" | "eraser";
+type Tool = "pen" | "highlighter" | "eraser" | "shape";
+type ShapeKind = "line" | "rectangle" | "ellipse" | "arrow";
 type PenStyle = "fountain" | "ballpoint" | "brush" | "pencil";
 
 type Props = {
@@ -21,6 +22,7 @@ type Props = {
   tipFlatness?: number;
   stabilization?: number;
   playbackTime?: number | null;
+  shapeKind?: ShapeKind;
 };
 
 function pathFor(points: InkPoint[]) {
@@ -45,7 +47,8 @@ function variableWidth(stroke: InkStroke, pressure: number, angle: number) {
 export default function InkCanvas({
   strokes, onChange, tool, color, paper, enabled, width,
   penStyle = "ballpoint", tipSharpness = 75,
-  pressureSensitivity = 75, tipFlatness = 33, stabilization = 35, playbackTime = null
+  pressureSensitivity = 75, tipFlatness = 33, stabilization = 35, playbackTime = null,
+  shapeKind = "line"
 }: Props) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [draft, setDraft] = useState<InkStroke | null>(null);
@@ -78,12 +81,18 @@ export default function InkCanvas({
       tipSharpness,
       pressureSensitivity,
       tipFlatness,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      shape: tool === "shape" ? shapeKind : undefined
     });
   }
 
   function extendStroke(event: React.PointerEvent<SVGSVGElement>) {
     if (!draft) return;
+    if (draft.shape) {
+      const endpoint = pointFromEvent(event);
+      setDraft((current) => current ? { ...current, points: [current.points[0], endpoint] } : current);
+      return;
+    }
     const coalesced = event.nativeEvent.getCoalescedEvents?.();
     const events = coalesced && coalesced.length ? coalesced : [event.nativeEvent];
     setDraft((current) => {
@@ -124,6 +133,31 @@ export default function InkCanvas({
 
   function renderStroke(stroke: InkStroke, draftStroke = false) {
     const timelineOpacity = playbackTime && stroke.createdAt && stroke.createdAt > playbackTime ? stroke.opacity * .12 : stroke.opacity;
+    if (stroke.shape && stroke.points.length >= 2) {
+      const start = stroke.points[0];
+      const end = stroke.points[stroke.points.length - 1];
+      const x = Math.min(start.x, end.x);
+      const y = Math.min(start.y, end.y);
+      const w = Math.abs(end.x - start.x);
+      const h = Math.abs(end.y - start.y);
+      const common = { fill: "none", stroke: stroke.color, strokeWidth: stroke.width, strokeOpacity: timelineOpacity, vectorEffect: "non-scaling-stroke" as const };
+      let shapeDrawing: React.ReactNode;
+      if (stroke.shape === "rectangle") shapeDrawing = <rect x={x} y={y} width={w} height={h} rx="3" {...common} />;
+      else if (stroke.shape === "ellipse") shapeDrawing = <ellipse cx={x + w / 2} cy={y + h / 2} rx={w / 2} ry={h / 2} {...common} />;
+      else if (stroke.shape === "arrow") {
+        const angle = Math.atan2(end.y - start.y, end.x - start.x);
+        const size = Math.max(10, stroke.width * 4);
+        const a1 = angle + Math.PI * .82;
+        const a2 = angle - Math.PI * .82;
+        shapeDrawing = <><line x1={start.x} y1={start.y} x2={end.x} y2={end.y} {...common} /><path d={`M ${end.x + Math.cos(a1) * size} ${end.y + Math.sin(a1) * size} L ${end.x} ${end.y} L ${end.x + Math.cos(a2) * size} ${end.y + Math.sin(a2) * size}`} {...common} /></>;
+      } else shapeDrawing = <line x1={start.x} y1={start.y} x2={end.x} y2={end.y} {...common} />;
+      return <g key={stroke.id} className={tool === "eraser" && !draftStroke ? "erasableStroke" : undefined}
+        onPointerDown={(event) => { if (tool === "eraser" && !draftStroke) { event.preventDefault(); eraseStroke(stroke.id); } }}
+        onPointerEnter={(event) => { if (tool === "eraser" && !draftStroke && event.buttons === 1) eraseStroke(stroke.id); }}>
+        {shapeDrawing}
+      </g>;
+    }
+
     const expressive = stroke.tool === "pen" &&
       (stroke.penStyle === "fountain" || stroke.penStyle === "brush") &&
       stroke.points.some((point) => typeof point.pressure === "number");
