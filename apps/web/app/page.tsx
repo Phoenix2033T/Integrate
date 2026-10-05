@@ -284,6 +284,7 @@ export default function Home() {
   const [playbackTime, setPlaybackTime] = useState<number | null>(null);
   const [mathOpen, setMathOpen] = useState(false);
   const [shapeKind, setShapeKind] = useState<"line" | "rectangle" | "ellipse" | "arrow">("line");
+  const [selectedStrokeIds, setSelectedStrokeIds] = useState<string[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const workspaceImportRef = useRef<HTMLInputElement | null>(null);
@@ -700,6 +701,7 @@ export default function Home() {
     setTool(next);
     if (toolGroup(next) === "pen") setLastPenStyle(next);
     if (toolGroup(next) !== "pen") setPenSettingsOpen(false);
+    if (next !== "lasso") setSelectedStrokeIds([]);
     if (next === "fountain") setInkWidth(4.2);
     if (next === "ballpoint") setInkWidth(3.4);
     if (next === "pencil") setInkWidth(2.4);
@@ -724,6 +726,23 @@ export default function Home() {
     const stroke = redoStrokes[redoStrokes.length - 1];
     patchPage({ strokes: [...selectedPage.strokes, stroke] });
     setRedoStrokes((current) => current.slice(0, -1));
+  }
+
+  function moveSelectedInk(dx: number, dy: number) {
+    if (!selectedPage || !selectedStrokeIds.length) return;
+    patchPage({
+      strokes: selectedPage.strokes.map((stroke) =>
+        selectedStrokeIds.includes(stroke.id)
+          ? { ...stroke, points: stroke.points.map((point) => ({ ...point, x: point.x + dx, y: point.y + dy })) }
+          : stroke
+      )
+    });
+  }
+
+  function deleteSelectedInk() {
+    if (!selectedPage || !selectedStrokeIds.length) return;
+    patchPage({ strokes: selectedPage.strokes.filter((stroke) => !selectedStrokeIds.includes(stroke.id)) });
+    setSelectedStrokeIds([]);
   }
 
   async function addAttachments(files: FileList | null) {
@@ -945,8 +964,9 @@ export default function Home() {
     tool === "highlighter" ? "highlighter" :
     tool === "eraser" ? "eraser" :
     tool === "shapes" ? "shape" :
+    tool === "lasso" ? "lasso" :
     "pen";
-  const drawingEnabled = ["fountain", "ballpoint", "pencil", "highlighter", "eraser", "shapes"].includes(tool);
+  const drawingEnabled = ["fountain", "ballpoint", "pencil", "highlighter", "eraser", "shapes", "lasso"].includes(tool);
 
   if (view === "home") {
     const displayedNotebooks = libraryNotebooks;
@@ -1347,7 +1367,14 @@ export default function Home() {
                 )}
 
                 {tool === "lasso" && (
-                  <div className="nestedChoices"><button className="segmented active">All</button><button className="segmented">Ink</button><button className="segmented">Text</button><button className="segmented">Images</button></div>
+                  <div className="nestedChoices lassoControls">
+                    <span className="contextHint">{selectedStrokeIds.length ? `${selectedStrokeIds.length} stroke${selectedStrokeIds.length === 1 ? "" : "s"} selected` : "Draw around ink to select it"}</span>
+                    <button className="segmented" onClick={() => moveSelectedInk(-12, 0)} disabled={!selectedStrokeIds.length}>←</button>
+                    <button className="segmented" onClick={() => moveSelectedInk(0, -12)} disabled={!selectedStrokeIds.length}>↑</button>
+                    <button className="segmented" onClick={() => moveSelectedInk(0, 12)} disabled={!selectedStrokeIds.length}>↓</button>
+                    <button className="segmented" onClick={() => moveSelectedInk(12, 0)} disabled={!selectedStrokeIds.length}>→</button>
+                    <button className="segmented dangerText" onClick={deleteSelectedInk} disabled={!selectedStrokeIds.length}>Delete</button>
+                  </div>
                 )}
 
                 {tool === "eraser" && (
@@ -1420,6 +1447,8 @@ export default function Home() {
                     stabilization={penSettings.stabilization}
                     playbackTime={playbackTime}
                     shapeKind={shapeKind}
+                    selectedStrokeIds={selectedStrokeIds}
+                    onSelectionChange={setSelectedStrokeIds}
                   />
                 </div>
                 {selectedPage.attachments.some((attachment) => attachment.type === "audio") && (
