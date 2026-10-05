@@ -76,7 +76,8 @@ export default function InkCanvas({
       penStyle: highlighter ? "ballpoint" : penStyle,
       tipSharpness,
       pressureSensitivity,
-      tipFlatness
+      tipFlatness,
+      createdAt: Date.now()
     });
   }
 
