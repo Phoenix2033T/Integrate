@@ -20,6 +20,7 @@ export type InkStroke = {
   tipSharpness?: number;
   pressureSensitivity?: number;
   tipFlatness?: number;
+  createdAt?: number;
 };
 
 export type NoteAttachment = {
