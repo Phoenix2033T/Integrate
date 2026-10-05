@@ -3,18 +3,9 @@ name: Web CI
 on:
   push:
     branches: [main]
-    paths:
-      - "package.json"
-      - "apps/web/**"
-      - "packages/core/**"
-      - ".github/workflows/web-ci.yml"
   pull_request:
     branches: [main]
-    paths:
-      - "package.json"
-      - "apps/web/**"
-      - "packages/core/**"
-      - ".github/workflows/web-ci.yml"
+  workflow_dispatch:
 
 concurrency:
   group: web-ci-${{ github.ref }}
