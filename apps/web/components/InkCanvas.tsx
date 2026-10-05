@@ -25,6 +25,7 @@ type Props = {
   shapeKind?: ShapeKind;
   selectedStrokeIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
+  eraserMode?: "stroke" | "precision";
 };
 
 function pathFor(points: InkPoint[]) {
@@ -62,7 +63,7 @@ export default function InkCanvas({
   strokes, onChange, tool, color, paper, enabled, width,
   penStyle = "ballpoint", tipSharpness = 75,
   pressureSensitivity = 75, tipFlatness = 33, stabilization = 35, playbackTime = null,
-  shapeKind = "line", selectedStrokeIds = [], onSelectionChange
+  shapeKind = "line", selectedStrokeIds = [], onSelectionChange, eraserMode = "stroke"
 }: Props) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [draft, setDraft] = useState<InkStroke | null>(null);
@@ -167,6 +168,26 @@ export default function InkCanvas({
     onChange(strokes.filter((stroke) => stroke.id !== id));
   }
 
+  function eraseStrokeAt(stroke: InkStroke, event: React.PointerEvent<SVGGElement>) {
+    if (eraserMode === "stroke" || stroke.shape) {
+      eraseStroke(stroke.id);
+      return;
+    }
+    const point = pointFromEvent(event as unknown as React.PointerEvent<SVGSVGElement>);
+    const radius = 24;
+    const runs: InkPoint[][] = [];
+    let run: InkPoint[] = [];
+    for (const item of stroke.points) {
+      if (Math.hypot(item.x - point.x, item.y - point.y) <= radius) {
+        if (run.length > 1) runs.push(run);
+        run = [];
+      } else run.push(item);
+    }
+    if (run.length > 1) runs.push(run);
+    const replacements = runs.map((points, index) => ({ ...stroke, id: index === 0 ? stroke.id : createId(), points }));
+    onChange(strokes.flatMap((item) => item.id === stroke.id ? replacements : [item]));
+  }
+
   function renderStroke(stroke: InkStroke, draftStroke = false) {
     const timelineOpacity = playbackTime && stroke.createdAt && stroke.createdAt > playbackTime ? stroke.opacity * .12 : stroke.opacity;
     if (stroke.shape && stroke.points.length >= 2) {
@@ -188,8 +209,8 @@ export default function InkCanvas({
         shapeDrawing = <><line x1={start.x} y1={start.y} x2={end.x} y2={end.y} {...common} /><path d={`M ${end.x + Math.cos(a1) * size} ${end.y + Math.sin(a1) * size} L ${end.x} ${end.y} L ${end.x + Math.cos(a2) * size} ${end.y + Math.sin(a2) * size}`} {...common} /></>;
       } else shapeDrawing = <line x1={start.x} y1={start.y} x2={end.x} y2={end.y} {...common} />;
       return <g key={stroke.id} className={selectedStrokeIds.includes(stroke.id) ? "selectedStroke" : tool === "eraser" && !draftStroke ? "erasableStroke" : undefined}
-        onPointerDown={(event) => { if (tool === "eraser" && !draftStroke) { event.preventDefault(); eraseStroke(stroke.id); } }}
-        onPointerEnter={(event) => { if (tool === "eraser" && !draftStroke && event.buttons === 1) eraseStroke(stroke.id); }}>
+        onPointerDown={(event) => { if (tool === "eraser" && !draftStroke) { event.preventDefault(); eraseStrokeAt(stroke, event); } }}
+        onPointerEnter={(event) => { if (tool === "eraser" && !draftStroke && event.buttons === 1) eraseStrokeAt(stroke, event); }}>
         {shapeDrawing}
       </g>;
     }
