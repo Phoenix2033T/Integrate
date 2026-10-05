@@ -1321,7 +1321,7 @@ export default function Home() {
                     <button className={`nestedChoice ${tool === "ruler" ? "active" : ""}`} onClick={() => selectTool("ruler")}><ToolIcon name="ruler" /><span>Ruler</span></button>
                     <button className={`nestedChoice ${tool === "laser" ? "active" : ""}`} onClick={() => selectTool("laser")}><ToolIcon name="laser" /><span>Laser</span></button>
                     <button className="nestedChoice" onClick={() => void recognizeInk()} disabled={!selectedPage.strokes.length || recognitionLoading}><ToolIcon name="sparkles" /><span>{recognitionLoading ? "Reading…" : "Ink → Text"}</span></button>
-                    <label className="paperNested"><span>Paper</span><select value={selectedPage.paper} onChange={(event) => patchPage({ paper: event.target.value as PaperStyle })}><option value="blank">Blank</option><option value="lined">Ruled</option><option value="grid">Grid</option><option value="dots">Dots</option></select></label>
+                    <label className="paperNested"><span>Paper</span><select value={selectedPage.paper} onChange={(event) => patchPage({ paper: event.target.value as PaperStyle })}><option value="blank">Blank</option><option value="lined">Ruled</option><option value="grid">Grid</option><option value="dots">Dots</option><option value="cornell">Cornell</option><option value="engineering">Engineering</option><option value="isometric">Isometric</option></select></label>
                   </div>
                 )}
 
