@@ -1023,7 +1023,8 @@ export default function Home() {
     <main className={`editorShell ${aiOpen ? "withAI" : ""}`}>
       <section className="notebookWorkspace">
         <header className="editorHeader">
-          <button className="backButton" onClick={() => setView("home")}>‹</button>
+          <button className="backButton" onClick={() => setView("home")} aria-label="Back to library">‹</button>
+          <button className={pageNavigatorOpen ? "headerAction pageNavToggle active" : "headerAction pageNavToggle"} onClick={() => setPageNavigatorOpen((open) => !open)} aria-label="Show pages" title="Pages">☷</button>
           <div className="notebookTitleBlock">
             <input value={selectedNotebook?.title || ""} onChange={(event) => patchNotebook({ title: event.target.value })} aria-label="Notebook title" />
             <span>{saveState === "saved" ? "Saved" : "Saving…"}</span>
@@ -1035,6 +1036,9 @@ export default function Home() {
             <button className="addTab" onClick={createPage}>＋</button>
           </div>
           <div className="editorHeaderActions">
+            <button className="headerAction" onClick={exportNotebookMarkdown} aria-label="Export notebook as Markdown" title="Export Markdown">⇩</button>
+            <button className="headerAction" onClick={() => window.print()} aria-label="Print or save as PDF" title="Print / Save PDF">↗</button>
+            <button className="headerAction" onClick={() => selectedNotebook && setNotebookEditorId(selectedNotebook.id)} aria-label="Notebook options" title="Notebook options">•••</button>
             <button className={selectedNotebook?.favorite ? "headerAction favorite active" : "headerAction favorite"} onClick={() => selectedNotebook && toggleNotebookFavorite(selectedNotebook.id)} aria-label={selectedNotebook?.favorite ? "Remove notebook from favorites" : "Add notebook to favorites"} title="Favorite notebook">{selectedNotebook?.favorite ? "★" : "☆"}</button>
             <div className="pageCounter">{(selectedNotebook?.pages.findIndex((page) => page.id === selectedPage?.id) ?? 0) + 1}<span>/</span>{selectedNotebook?.pages.length ?? 1}</div>
             <button className={detailsOpen ? "headerAction active" : "headerAction"} onClick={() => setDetailsOpen((value) => !value)} aria-label="Page details" title="Page details">
@@ -1043,6 +1047,28 @@ export default function Home() {
             <button className="aiHeaderButton" onClick={() => setAiOpen((value) => !value)}><ToolIcon name="sparkles" /><span>AI</span></button>
           </div>
         </header>
+
+        {pageNavigatorOpen && selectedNotebook && (
+          <aside className="pageNavigator" aria-label="Notebook pages">
+            <div className="pageNavigatorHeader"><strong>Pages</strong><button onClick={createPage}>＋</button></div>
+            <div className="pageNavigatorList">
+              {selectedNotebook.pages.map((page, index) => (
+                <div className={page.id === selectedPage?.id ? "pageNavigatorItem active" : "pageNavigatorItem"} key={page.id}>
+                  <button className="pageNavigatorOpen" onClick={() => { setSelectedPageId(page.id); setRedoStrokes([]); }}>
+                    <span className={`pageMiniPreview paper-${page.paper}`}><i>{index + 1}</i></span>
+                    <span><strong>{page.title}</strong><small>{page.subject || "General"}</small></span>
+                  </button>
+                  <div className="pageNavigatorActions">
+                    <button onClick={() => movePage(page.id, -1)} disabled={index === 0} title="Move page up">↑</button>
+                    <button onClick={() => movePage(page.id, 1)} disabled={index === selectedNotebook.pages.length - 1} title="Move page down">↓</button>
+                    <button onClick={() => duplicatePage(page.id)} title="Duplicate page">⧉</button>
+                    <button className="dangerText" onClick={() => deletePage(page.id)} disabled={selectedNotebook.pages.length <= 1} title="Delete page">×</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </aside>
+        )}
 
         {selectedPage && (
           <>
@@ -1262,6 +1288,19 @@ export default function Home() {
           </>
         )}
       </section>
+
+      {notebookEditorId && selectedNotebook && (
+        <div className="folderEditorBackdrop editorModalBackdrop" role="presentation" onMouseDown={() => setNotebookEditorId(null)}>
+          <section className="folderEditorCard notebookEditorCard" role="dialog" aria-modal="true" aria-label="Notebook options" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="folderEditorHeader"><div><span className="eyebrow">Notebook</span><h2>Notebook options</h2></div><button className="closeFolderEditor" onClick={() => setNotebookEditorId(null)}>×</button></div>
+            <label className="folderNameField">Name<input value={selectedNotebook.title} onChange={(event) => patchNotebook({ title: event.target.value })} /></label>
+            <label className="folderNameField">Folder<select value={selectedNotebook.folderId || ""} onChange={(event) => patchNotebook({ folderId: event.target.value || null })}><option value="">Documents</option>{workspace.folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}</select></label>
+            <label className="folderNameField">Tags<input value={(selectedNotebook.tags || []).join(", ")} onChange={(event) => patchNotebook({ tags: event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean) })} placeholder="school, exam, calculus" /></label>
+            <div className="notebookEditorActions"><button className="subtleButton" onClick={() => toggleNotebookFavorite(selectedNotebook.id)}>{selectedNotebook.favorite ? "★ Favorited" : "☆ Add to favorites"}</button><button className="subtleButton" onClick={exportNotebookMarkdown}>Export Markdown</button><button className="subtleButton dangerText" onClick={() => { trashNotebook(selectedNotebook.id); setNotebookEditorId(null); }}>Move to Trash</button></div>
+            <button className="primary folderDoneButton" onClick={() => setNotebookEditorId(null)}>Done</button>
+          </section>
+        </div>
+      )}
 
       {aiOpen && selectedPage && (
         <aside className="aiPanel editorAiPanel">
