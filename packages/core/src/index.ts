@@ -4,11 +4,13 @@ export type AiScope = "page" | "notebook" | "all";
 export type NoteAttachment = {
   id: string;
   name: string;
-  type: "image" | "pdf";
+  type: "image" | "pdf" | "audio";
   mimeType: string;
   dataUrl?: string;
   size: number;
   createdAt: number;
+  startedAt?: number;
+  durationMs?: number;
 };
 
 export type Revision = {
@@ -33,6 +35,7 @@ export type InkStroke = {
   tipSharpness?: number;
   pressureSensitivity?: number;
   tipFlatness?: number;
+  createdAt?: number;
 };
 
 export type Page = {
