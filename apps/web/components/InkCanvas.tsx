@@ -20,6 +20,7 @@ type Props = {
   pressureSensitivity?: number;
   tipFlatness?: number;
   stabilization?: number;
+  playbackTime?: number | null;
 };
 
 function pathFor(points: InkPoint[]) {
@@ -44,7 +45,7 @@ function variableWidth(stroke: InkStroke, pressure: number, angle: number) {
 export default function InkCanvas({
   strokes, onChange, tool, color, paper, enabled, width,
   penStyle = "ballpoint", tipSharpness = 75,
-  pressureSensitivity = 75, tipFlatness = 33, stabilization = 35
+  pressureSensitivity = 75, tipFlatness = 33, stabilization = 35, playbackTime = null
 }: Props) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [draft, setDraft] = useState<InkStroke | null>(null);
@@ -122,6 +123,7 @@ export default function InkCanvas({
   }
 
   function renderStroke(stroke: InkStroke, draftStroke = false) {
+    const timelineOpacity = playbackTime && stroke.createdAt && stroke.createdAt > playbackTime ? stroke.opacity * .12 : stroke.opacity;
     const expressive = stroke.tool === "pen" &&
       (stroke.penStyle === "fountain" || stroke.penStyle === "brush") &&
       stroke.points.some((point) => typeof point.pressure === "number");
@@ -136,7 +138,7 @@ export default function InkCanvas({
             <line key={index}
               x1={previous.x} y1={previous.y} x2={point.x} y2={point.y}
               stroke={stroke.color} strokeWidth={segmentWidth}
-              strokeOpacity={stroke.opacity} strokeLinecap="round"
+              strokeOpacity={timelineOpacity} strokeLinecap="round"
               vectorEffect="non-scaling-stroke"
             />
           );
@@ -148,7 +150,7 @@ export default function InkCanvas({
         fill="none"
         stroke={stroke.color}
         strokeWidth={stroke.width}
-        strokeOpacity={stroke.opacity}
+        strokeOpacity={timelineOpacity}
         strokeLinecap="round"
         strokeLinejoin="round"
         vectorEffect="non-scaling-stroke"
