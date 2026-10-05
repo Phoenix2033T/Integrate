@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import InkCanvas from "../components/InkCanvas";
+import AudioAttachment from "../components/AudioAttachment";
+import { saveMediaBlob } from "../lib/mediaStore";
 import { strokesToSvgDataUrl } from "../lib/ink";
 import { createId } from "../lib/id";
 import type {
@@ -276,9 +278,17 @@ export default function Home() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState("");
   const [recognitionLoading, setRecognitionLoading] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [recordingElapsed, setRecordingElapsed] = useState(0);
+  const [playbackTime, setPlaybackTime] = useState<number | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const workspaceImportRef = useRef<HTMLInputElement | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingChunksRef = useRef<Blob[]>([]);
+  const recordingStreamRef = useRef<MediaStream | null>(null);
+  const recordingTimerRef = useRef<number | null>(null);
+  const recordingTargetRef = useRef<{ notebookId: string; pageId: string; startedAt: number } | null>(null);
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem(THEME_KEY);
@@ -783,6 +793,77 @@ export default function Home() {
     ].filter(Boolean).join("\n\n")).join("\n\n---\n\n");
     const safeName = selectedNotebook.title.replace(/[^a-z0-9-_]+/gi, "-").replace(/^-|-$/g, "") || "notebook";
     downloadTextFile(`${safeName}.md`, markdown, "text/markdown");
+  }
+
+  async function startAudioRecording() {
+    if (!selectedNotebook || !selectedPage || recording) return;
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      window.alert("Audio recording is not supported in this browser.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const startedAt = Date.now();
+      recordingChunksRef.current = [];
+      recordingStreamRef.current = stream;
+      recordingTargetRef.current = { notebookId: selectedNotebook.id, pageId: selectedPage.id, startedAt };
+      recorder.ondataavailable = (event) => { if (event.data.size) recordingChunksRef.current.push(event.data); };
+      recorder.onstop = () => {
+        const target = recordingTargetRef.current;
+        const chunks = recordingChunksRef.current;
+        const durationMs = target ? Date.now() - target.startedAt : 0;
+        if (target && chunks.length) {
+          const blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
+          const id = createId();
+          void saveMediaBlob(id, blob).then(() => {
+            const attachment: NoteAttachment = {
+              id,
+              name: `Recording ${new Date(target.startedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`,
+              type: "audio",
+              mimeType: blob.type,
+              size: blob.size,
+              createdAt: Date.now(),
+              startedAt: target.startedAt,
+              durationMs
+            };
+            setWorkspace((current) => ({
+              ...current,
+              notebooks: current.notebooks.map((notebook) =>
+                notebook.id !== target.notebookId ? notebook : {
+                  ...notebook,
+                  updatedAt: Date.now(),
+                  pages: notebook.pages.map((page) =>
+                    page.id === target.pageId ? { ...page, attachments: [...page.attachments, attachment], updatedAt: Date.now() } : page
+                  )
+                }
+              )
+            }));
+          });
+        }
+        recordingStreamRef.current?.getTracks().forEach((track) => track.stop());
+        recordingStreamRef.current = null;
+        recordingTargetRef.current = null;
+        recordingChunksRef.current = [];
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start(1000);
+      setRecording(true);
+      setRecordingElapsed(0);
+      recordingTimerRef.current = window.setInterval(() => setRecordingElapsed(Math.floor((Date.now() - startedAt) / 1000)), 1000);
+    } catch {
+      window.alert("Microphone access is required to record audio.");
+    }
+  }
+
+  function stopAudioRecording() {
+    const recorder = mediaRecorderRef.current;
+    if (!recorder || recorder.state === "inactive") return;
+    recorder.stop();
+    mediaRecorderRef.current = null;
+    if (recordingTimerRef.current) window.clearInterval(recordingTimerRef.current);
+    recordingTimerRef.current = null;
+    setRecording(false);
   }
 
   function buildAiContext(scope: AiScope) {
@@ -1316,6 +1397,7 @@ export default function Home() {
                     pressureSensitivity={penSettings.pressureSensitivity}
                     tipFlatness={penSettings.tipFlatness}
                     stabilization={penSettings.stabilization}
+                    playbackTime={playbackTime}
                   />
                 </div>
               </article>
