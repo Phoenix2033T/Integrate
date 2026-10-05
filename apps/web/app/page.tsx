@@ -335,6 +335,43 @@ export default function Home() {
   }, [theme]);
 
   useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      const editing = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.tagName === "SELECT" || target?.isContentEditable;
+      if (event.key === "Escape") {
+        setPenSettingsOpen(false);
+        setDetailsOpen(false);
+        setNotebookEditorId(null);
+        return;
+      }
+      if (editing || view !== "notebook") return;
+      const command = event.metaKey || event.ctrlKey;
+      if (command && event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        if (event.shiftKey) redoInk(); else undoInk();
+        return;
+      }
+      if (command && event.key.toLowerCase() === "y") {
+        event.preventDefault();
+        redoInk();
+        return;
+      }
+      if (command && event.key.toLowerCase() === "n") {
+        event.preventDefault();
+        createPage();
+        return;
+      }
+      if (event.key.toLowerCase() === "p") selectTool(lastPenStyle);
+      if (event.key.toLowerCase() === "h") selectTool("highlighter");
+      if (event.key.toLowerCase() === "e") selectTool("eraser");
+      if (event.key.toLowerCase() === "t") selectTool("text");
+      if (event.key.toLowerCase() === "v") selectTool("hand");
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [view, selectedNotebookId, selectedPageId, selectedPage?.strokes.length, redoStrokes.length, lastPenStyle]);
+
+  useEffect(() => {
     if (!hydrated) return;
     setSaveState("saving");
     const timer = window.setTimeout(() => {
