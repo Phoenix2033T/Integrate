@@ -3222,3 +3222,37 @@ textarea:focus-visible {
 }
 .lassoControls .segmented:disabled { opacity: .32; cursor: default; }
 .lassoControls .contextHint { margin-right: 4px; }
+
+
+/* Release system, legal, and recovery surfaces */
+.systemPage,
+.legalPage {
+  min-height: 100dvh;
+  padding: max(34px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(34px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  color: var(--ink);
+}
+.systemCard,
+.legalCard {
+  width: min(720px, 100%);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: 0 22px 70px rgba(13,45,68,.12);
+}
+.systemCard { max-width: 520px; padding: 34px; text-align: center; }
+.systemMark {
+  width: 54px; height: 54px; margin: 0 auto 14px; display: grid; place-items: center;
+  border-radius: 16px; background: var(--accentSoft); color: var(--accent); font-size: 28px; font-weight: 800;
+}
+.systemCard h1, .legalCard h1 { margin: 8px 0 10px; letter-spacing: -.035em; }
+.systemCard p { color: var(--muted); line-height: 1.6; }
+.systemActions { display: flex; justify-content: center; gap: 9px; margin-top: 20px; }
+.systemLink { display: inline-flex; align-items: center; justify-content: center; margin-top: 16px; text-decoration: none; }
+.legalCard { padding: clamp(26px, 5vw, 54px); }
+.legalBack { color: var(--accent); text-decoration: none; font-size: 12px; font-weight: 750; }
+.legalLead { color: var(--muted); font-size: 15px; line-height: 1.65; }
+.legalCard h2 { margin: 27px 0 7px; font-size: 15px; }
+.legalCard p:not(.legalLead) { margin: 0; color: var(--ink-soft); font-size: 12px; line-height: 1.7; }
