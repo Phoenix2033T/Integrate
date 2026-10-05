@@ -521,6 +521,82 @@ export default function Home() {
     }));
   }
 
+  function trashNotebook(notebookId: string) {
+    setWorkspace((current) => ({
+      ...current,
+      notebooks: current.notebooks.map((notebook) =>
+        notebook.id === notebookId ? { ...notebook, trashedAt: Date.now(), favorite: false } : notebook
+      )
+    }));
+    if (selectedNotebookId === notebookId) setView("home");
+  }
+
+  function restoreNotebook(notebookId: string) {
+    setWorkspace((current) => ({
+      ...current,
+      notebooks: current.notebooks.map((notebook) =>
+        notebook.id === notebookId ? { ...notebook, trashedAt: null, updatedAt: Date.now() } : notebook
+      )
+    }));
+  }
+
+  function duplicatePage(pageId: string) {
+    if (!selectedNotebook) return;
+    const source = selectedNotebook.pages.find((page) => page.id === pageId);
+    if (!source) return;
+    const copy: Page = {
+      ...source,
+      id: createId(),
+      title: `${source.title} copy`,
+      strokes: source.strokes.map((stroke) => ({ ...stroke, id: createId(), points: stroke.points.map((point) => ({ ...point })) })),
+      attachments: source.attachments.map((attachment) => ({ ...attachment, id: createId() })),
+      revisions: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+    const index = selectedNotebook.pages.findIndex((page) => page.id === pageId);
+    setWorkspace((current) => ({
+      ...current,
+      notebooks: current.notebooks.map((notebook) =>
+        notebook.id === selectedNotebook.id
+          ? { ...notebook, updatedAt: Date.now(), pages: [...notebook.pages.slice(0, index + 1), copy, ...notebook.pages.slice(index + 1)] }
+          : notebook
+      )
+    }));
+    setSelectedPageId(copy.id);
+  }
+
+  function movePage(pageId: string, direction: -1 | 1) {
+    if (!selectedNotebook) return;
+    const index = selectedNotebook.pages.findIndex((page) => page.id === pageId);
+    const nextIndex = index + direction;
+    if (index < 0 || nextIndex < 0 || nextIndex >= selectedNotebook.pages.length) return;
+    setWorkspace((current) => ({
+      ...current,
+      notebooks: current.notebooks.map((notebook) => {
+        if (notebook.id !== selectedNotebook.id) return notebook;
+        const pages = [...notebook.pages];
+        [pages[index], pages[nextIndex]] = [pages[nextIndex], pages[index]];
+        return { ...notebook, pages, updatedAt: Date.now() };
+      })
+    }));
+  }
+
+  function deletePage(pageId: string) {
+    if (!selectedNotebook || selectedNotebook.pages.length <= 1) return;
+    const index = selectedNotebook.pages.findIndex((page) => page.id === pageId);
+    const nextPage = selectedNotebook.pages[index + 1] || selectedNotebook.pages[index - 1];
+    setWorkspace((current) => ({
+      ...current,
+      notebooks: current.notebooks.map((notebook) =>
+        notebook.id === selectedNotebook.id
+          ? { ...notebook, pages: notebook.pages.filter((page) => page.id !== pageId), updatedAt: Date.now() }
+          : notebook
+      )
+    }));
+    if (selectedPageId === pageId) setSelectedPageId(nextPage?.id || "");
+  }
+
   function updateFolder(folderId: string, patch: Partial<Folder>) {
     setWorkspace((current) => ({
       ...current,
