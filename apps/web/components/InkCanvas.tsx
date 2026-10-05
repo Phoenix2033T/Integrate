@@ -187,7 +187,7 @@ export default function InkCanvas({
         const a2 = angle - Math.PI * .82;
         shapeDrawing = <><line x1={start.x} y1={start.y} x2={end.x} y2={end.y} {...common} /><path d={`M ${end.x + Math.cos(a1) * size} ${end.y + Math.sin(a1) * size} L ${end.x} ${end.y} L ${end.x + Math.cos(a2) * size} ${end.y + Math.sin(a2) * size}`} {...common} /></>;
       } else shapeDrawing = <line x1={start.x} y1={start.y} x2={end.x} y2={end.y} {...common} />;
-      return <g key={stroke.id} className={tool === "eraser" && !draftStroke ? "erasableStroke" : undefined}
+      return <g key={stroke.id} className={selectedStrokeIds.includes(stroke.id) ? "selectedStroke" : tool === "eraser" && !draftStroke ? "erasableStroke" : undefined}
         onPointerDown={(event) => { if (tool === "eraser" && !draftStroke) { event.preventDefault(); eraseStroke(stroke.id); } }}
         onPointerEnter={(event) => { if (tool === "eraser" && !draftStroke && event.buttons === 1) eraseStroke(stroke.id); }}>
         {shapeDrawing}
@@ -230,7 +230,7 @@ export default function InkCanvas({
     return (
       <g
         key={stroke.id}
-        className={tool === "eraser" && !draftStroke ? "erasableStroke" : undefined}
+        className={selectedStrokeIds.includes(stroke.id) ? "selectedStroke" : tool === "eraser" && !draftStroke ? "erasableStroke" : undefined}
         onPointerDown={(event) => {
           if (tool === "eraser" && !draftStroke) {
             event.preventDefault();
@@ -261,6 +261,7 @@ export default function InkCanvas({
       >
         {strokes.map((stroke) => renderStroke(stroke))}
         {draft && renderStroke(draft, true)}
+        {lassoDraft && lassoDraft.length > 1 && <path d={pathFor(lassoDraft)} fill="rgba(103,185,255,.08)" stroke="#67b9ff" strokeWidth="2" strokeDasharray="8 7" vectorEffect="non-scaling-stroke" />}
       </svg>
     </div>
   );
