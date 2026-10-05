@@ -540,6 +540,14 @@ export default function Home() {
     }));
   }
 
+  function removeNotebookForever(notebookId: string) {
+    if (!window.confirm("Delete this notebook permanently?")) return;
+    setWorkspace((current) => ({
+      ...current,
+      notebooks: current.notebooks.filter((notebook) => notebook.id !== notebookId)
+    }));
+  }
+
   function duplicatePage(pageId: string) {
     if (!selectedNotebook) return;
     const source = selectedNotebook.pages.find((page) => page.id === pageId);
@@ -802,6 +810,7 @@ export default function Home() {
   if (view === "home") {
     const displayedNotebooks = libraryNotebooks;
     const folderBeingEdited = workspace.folders.find((folder) => folder.id === folderEditorId) ?? null;
+    const notebookBeingEdited = workspace.notebooks.find((notebook) => notebook.id === notebookEditorId) ?? null;
     const folderColors = ["#5aa9e6", "#6d9eeb", "#8b7cf6", "#d16ba5", "#ef6f6c", "#f4a261", "#f6c453", "#58b09c", "#39a9a3", "#64748b"];
     const folderSymbols = ["📁", "🎓", "📚", "∑", "🧪", "✦", "🎨", "💡", "⚙", "🏠", "⭐", "🗂️"];
 
@@ -820,9 +829,16 @@ export default function Home() {
               <button className={!query && libraryMode === "documents" ? "active" : ""} onClick={() => { setCurrentFolderId(null); setQuery(""); setLibraryMode("documents"); }}>Documents</button>
               <button className={!query && libraryMode === "favorites" ? "active" : ""} onClick={() => { setCurrentFolderId(null); setQuery(""); setLibraryMode("favorites"); }}>Favorites</button>
               <button className={!query && libraryMode === "recent" ? "active" : ""} onClick={() => { setCurrentFolderId(null); setQuery(""); setLibraryMode("recent"); }}>Recent</button>
+              <button className={!query && libraryMode === "trash" ? "active" : ""} onClick={() => { setCurrentFolderId(null); setQuery(""); setLibraryMode("trash"); }}>Trash</button>
             </nav>
 
             <div className="libraryTopActions">
+              <select className="librarySortSelect" value={librarySort} onChange={(event) => setLibrarySort(event.target.value as LibrarySort)} aria-label="Sort notebooks">
+                <option value="updated">Last edited</option><option value="title">Title</option><option value="created">Created</option>
+              </select>
+              <button className="libraryIconButton" onClick={exportWorkspaceBackup} title="Download backup" aria-label="Download backup">⇩</button>
+              <button className="libraryIconButton" onClick={() => workspaceImportRef.current?.click()} title="Import backup" aria-label="Import backup">⇧</button>
+              <input ref={workspaceImportRef} className="hiddenInput" type="file" accept="application/json,.json" onChange={(event) => void importWorkspaceBackup(event.target.files?.[0] || null)} />
               <button className="libraryIconButton layoutQuickButton" onClick={() => setLibraryLayout((value) => value === "grid" ? "list" : "grid")} title={libraryLayout === "grid" ? "Switch to list view" : "Switch to grid view"} aria-label="Change library layout">{libraryLayout === "grid" ? "☷" : "▦"}</button>
               <button className="libraryIconButton themeQuickButton" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} title="Switch appearance">{theme === "dark" ? "☀" : "☾"}</button>
               <button className="primary newLibraryButton" onClick={createNotebook}>＋ New notebook</button>
@@ -839,7 +855,7 @@ export default function Home() {
                   <button onClick={() => { setCurrentFolderId(null); setLibraryMode("documents"); }}>Documents</button>
                   {breadcrumbs.map((folder) => <span key={folder.id}>› <button onClick={() => setCurrentFolderId(folder.id)}>{folder.name}</button></span>)}
                 </div>
-                <h1>{currentFolder?.name || "Documents"}</h1>
+                <h1>{libraryMode === "favorites" ? "Favorites" : libraryMode === "recent" ? "Recent" : libraryMode === "trash" ? "Trash" : currentFolder?.name || "Documents"}</h1>
               </div>
               {currentFolder && (
                 <div className="headingActions">
@@ -874,13 +890,13 @@ export default function Home() {
             )}
 
             <div className="sectionHeadingWithHint">
-              <h2 className="sectionTitle">{searchResults ? "Search results" : libraryMode === "favorites" ? "Favorites" : libraryMode === "recent" ? "Recent" : currentFolder ? "Notebooks" : "Notebooks"}</h2>
-              {!searchResults && <span>{libraryMode === "favorites" ? "Your starred notebooks" : libraryMode === "recent" ? "Recently edited" : currentFolder ? "Notebooks in this folder" : "Your notebooks"}</span>}
+              <h2 className="sectionTitle">{searchResults ? "Search results" : libraryMode === "favorites" ? "Favorites" : libraryMode === "recent" ? "Recent" : libraryMode === "trash" ? "Recently deleted" : "Notebooks"}</h2>
+              {!searchResults && <span>{libraryMode === "favorites" ? "Your starred notebooks" : libraryMode === "recent" ? "Recently edited" : libraryMode === "trash" ? "Restore a notebook or remove it permanently" : currentFolder ? "Notebooks in this folder" : "Your notebooks"}</span>}
             </div>
             <div className={`documentGrid notebookGrid ${libraryLayout === "list" ? "notebookList" : ""}`}>
               {displayedNotebooks.map((notebook) => (
                 <div className="notebookTileWrap" key={notebook.id}>
-                  <button className="notebookTile notebookTileCard" onClick={() => openNotebook(notebook)}>
+                  <button className="notebookTile notebookTileCard" onClick={() => libraryMode === "trash" ? undefined : openNotebook(notebook)}>
                     <div className="notebookCover" style={{ "--notebook-color": notebook.color || "#5aa9e6" } as React.CSSProperties}>
                       <span className="notebookSpine" />
                       <span className="notebookPageEdge" />
@@ -893,7 +909,14 @@ export default function Home() {
                       <small><span className="typePill">Notebook</span>{notebook.pages.length} pages · {new Date(notebook.updatedAt || Date.now()).toLocaleDateString()}</small>
                     </span>
                   </button>
-                  <button className={`notebookFavoriteButton ${notebook.favorite ? "active" : ""}`} onClick={(event) => { event.stopPropagation(); toggleNotebookFavorite(notebook.id); }} aria-label={notebook.favorite ? `Remove ${notebook.title} from favorites` : `Add ${notebook.title} to favorites`} title={notebook.favorite ? "Remove from favorites" : "Add to favorites"}>{notebook.favorite ? "★" : "☆"}</button>
+                  {libraryMode === "trash" ? (
+                    <div className="notebookRecoveryActions"><button onClick={() => restoreNotebook(notebook.id)}>Restore</button><button className="dangerText" onClick={() => removeNotebookForever(notebook.id)}>Delete</button></div>
+                  ) : (
+                    <>
+                      <button className={`notebookFavoriteButton ${notebook.favorite ? "active" : ""}`} onClick={(event) => { event.stopPropagation(); toggleNotebookFavorite(notebook.id); }} aria-label={notebook.favorite ? `Remove ${notebook.title} from favorites` : `Add ${notebook.title} to favorites`} title={notebook.favorite ? "Remove from favorites" : "Add to favorites"}>{notebook.favorite ? "★" : "☆"}</button>
+                      <button className="notebookMoreButton" onClick={(event) => { event.stopPropagation(); setNotebookEditorId(notebook.id); }} aria-label={`Customize ${notebook.title}`} title="Notebook options">•••</button>
+                    </>
+                  )}
                 </div>
               ))}
               {!searchResults && libraryMode === "documents" && currentFolder && visibleNotebooks.length === 0 && (
@@ -901,6 +924,9 @@ export default function Home() {
               )}
               {!searchResults && libraryMode === "favorites" && displayedNotebooks.length === 0 && (
                 <div className="libraryEmptyState"><span>☆</span><strong>No favorites yet</strong><small>Star a notebook to keep it one tap away.</small></div>
+              )}
+              {!searchResults && libraryMode === "trash" && displayedNotebooks.length === 0 && (
+                <div className="libraryEmptyState"><span>✓</span><strong>Trash is empty</strong><small>Deleted notebooks can be restored from here.</small></div>
               )}
             </div>
           </div>
