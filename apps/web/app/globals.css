@@ -2818,3 +2818,219 @@ textarea:focus-visible {
   .libraryTopActions .newLibraryButton { padding-inline: 11px; }
   .notebookGrid.notebookList { max-width: none; }
 }
+
+
+/* Phase 1 library + page-management polish */
+.librarySortSelect {
+  height: 38px;
+  max-width: 118px;
+  padding: 0 28px 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 11px;
+  outline: none;
+}
+.notebookMoreButton {
+  position: absolute;
+  top: 47px;
+  right: 9px;
+  z-index: 3;
+  width: 32px;
+  height: 27px;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 9px;
+  background: rgba(5,22,34,.46);
+  color: rgba(255,255,255,.82);
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+.notebookMoreButton:hover { background: rgba(8,31,48,.76); }
+.notebookRecoveryActions {
+  position: absolute;
+  inset: auto 8px 8px 8px;
+  z-index: 4;
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+.notebookRecoveryActions button {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  padding: 6px 9px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+}
+.notebookRecoveryActions button:hover { background: var(--surface-hover); }
+.notebookEditorCard select {
+  width: 100%;
+  min-height: 40px;
+  margin-top: 6px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 0 11px;
+  background: var(--input);
+  color: var(--ink);
+}
+.notebookEditorActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 4px;
+}
+.editorModalBackdrop { z-index: 220; }
+.pageNavToggle {
+  flex: 0 0 auto;
+  margin-left: 2px;
+}
+.pageNavigator {
+  position: fixed;
+  z-index: 75;
+  top: 57px;
+  left: 0;
+  bottom: 0;
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(137,174,201,.17);
+  background: rgba(9,27,41,.96);
+  color: #e8f4fc;
+  box-shadow: 18px 0 45px rgba(0,0,0,.2);
+  backdrop-filter: blur(22px);
+}
+.pageNavigatorHeader {
+  height: 52px;
+  padding: 0 13px 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.pageNavigatorHeader strong { font-size: 12px; }
+.pageNavigatorHeader button {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 9px;
+  background: rgba(103,185,255,.12);
+  color: #8dccff;
+  cursor: pointer;
+  font-size: 18px;
+}
+.pageNavigatorList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 8px 30px;
+}
+.pageNavigatorItem {
+  position: relative;
+  border: 1px solid transparent;
+  border-radius: 13px;
+  margin-bottom: 7px;
+  padding: 6px;
+}
+.pageNavigatorItem:hover { background: rgba(255,255,255,.045); }
+.pageNavigatorItem.active {
+  border-color: rgba(103,185,255,.3);
+  background: rgba(103,185,255,.09);
+}
+.pageNavigatorOpen {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 45px minmax(0,1fr);
+  gap: 9px;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pageNavigatorOpen > span:last-child {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.pageNavigatorOpen strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+}
+.pageNavigatorOpen small { color: #88a8be; font-size: 8px; }
+.pageMiniPreview {
+  position: relative;
+  width: 43px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  background-color: #fff;
+  color: #496174;
+  box-shadow: 0 3px 8px rgba(0,0,0,.2);
+  overflow: hidden;
+}
+.pageMiniPreview.paper-grid {
+  background-image: linear-gradient(#dce8ef 1px,transparent 1px),linear-gradient(90deg,#dce8ef 1px,transparent 1px);
+  background-size: 8px 8px;
+}
+.pageMiniPreview.paper-lined {
+  background-image: repeating-linear-gradient(to bottom,transparent 0,transparent 8px,#dce8ef 9px);
+}
+.pageMiniPreview.paper-dots {
+  background-image: radial-gradient(#b7c8d4 .7px,transparent .7px);
+  background-size: 7px 7px;
+}
+.pageMiniPreview i {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.88);
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 800;
+}
+.pageNavigatorActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 3px;
+  margin-top: 5px;
+}
+.pageNavigatorActions button {
+  width: 25px;
+  height: 23px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #91aabc;
+  cursor: pointer;
+  font-size: 10px;
+}
+.pageNavigatorActions button:hover:not(:disabled) { background: rgba(255,255,255,.08); color: #fff; }
+.pageNavigatorActions button:disabled { opacity: .25; cursor: default; }
+
+@media (max-width: 900px) {
+  .librarySortSelect { display: none; }
+  .pageNavigator { width: min(260px, 78vw); }
+}
+@media (max-width: 620px) {
+  .libraryTopActions > .libraryIconButton:not(.newFolderButton):not(.layoutQuickButton) { display: none; }
+  .editorHeaderActions > .headerAction:nth-child(-n+3) { display: none; }
+}
+
+@media print {
+  .editorHeader, .floatingToolDock, .pageNavigator, .aiPanel { display: none !important; }
+  .editorShell, .notebookWorkspace, .focusCanvas { background: #fff !important; padding: 0 !important; margin: 0 !important; }
+  .focusCanvas .document { box-shadow: none !important; margin: 0 auto !important; }
+}
