@@ -1,12 +1,13 @@
 {
   "name": "@integrate/web",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.9.0-rc.1",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "next": "^15.5.4",
