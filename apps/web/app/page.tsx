@@ -692,6 +692,7 @@ export default function Home() {
       window.alert("This folder contains notebooks or subfolders. Move them before deleting it.");
       return;
     }
+    if (!window.confirm(`Delete the empty folder “${folder.name}”? This cannot be undone.`)) return;
     setWorkspace((current) => ({
       ...current,
       folders: current.folders.filter((item) => item.id !== folder.id)
@@ -1004,6 +1005,7 @@ export default function Home() {
               <input ref={workspaceImportRef} className="hiddenInput" type="file" accept="application/json,.json" onChange={(event) => void importWorkspaceBackup(event.target.files?.[0] || null)} />
               <button className="libraryIconButton layoutQuickButton" onClick={() => setLibraryLayout((value) => value === "grid" ? "list" : "grid")} title={libraryLayout === "grid" ? "Switch to list view" : "Switch to grid view"} aria-label="Change library layout">{libraryLayout === "grid" ? "☷" : "▦"}</button>
               <button className="libraryIconButton themeQuickButton" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} title="Switch appearance">{theme === "dark" ? "☀" : "☾"}</button>
+              <a className="libraryIconButton legalQuickLink" href="/privacy" title="Privacy" aria-label="Privacy">i</a>
               <button className="primary newLibraryButton" onClick={createNotebook}>＋ New notebook</button>
               <button className="libraryIconButton newFolderButton" onClick={createFolder} title="New folder">
                 <span className="miniFolderIcon" />＋
