@@ -3173,3 +3173,41 @@ textarea:focus-visible {
 .mathResult.incorrect { background: rgba(245,158,11,.11); border: 1px solid rgba(245,158,11,.22); }
 .mathResult span, .mathResult small { color: #adc0cc; }
 .mathAssistFootnote { margin: 11px 2px 1px; color: #6f8fa5; font-size: 8px; line-height: 1.45; }
+
+
+/* Expanded academic paper templates */
+.paper-cornell {
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(90deg, transparent 0, transparent 27%, color-mix(in srgb, var(--paper-line) 150%, transparent) 27%, color-mix(in srgb, var(--paper-line) 150%, transparent) calc(27% + 1px), transparent calc(27% + 1px)),
+    linear-gradient(transparent 0, transparent 78%, color-mix(in srgb, var(--paper-line) 150%, transparent) 78%, color-mix(in srgb, var(--paper-line) 150%, transparent) calc(78% + 1px), transparent calc(78% + 1px)),
+    repeating-linear-gradient(to bottom, transparent 0, transparent 31px, var(--paper-line) 32px);
+}
+.paper-engineering {
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--paper-line) 58%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--paper-line) 58%, transparent) 1px, transparent 1px),
+    linear-gradient(color-mix(in srgb, var(--paper-line) 130%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--paper-line) 130%, transparent) 1px, transparent 1px);
+  background-size: 8px 8px, 8px 8px, 40px 40px, 40px 40px;
+}
+.paper-isometric {
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(30deg, var(--paper-line) 1px, transparent 1px),
+    linear-gradient(150deg, var(--paper-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--paper-line) 1px, transparent 1px);
+  background-size: 28px 48px, 28px 48px, 28px 48px;
+}
+.pageMiniPreview.paper-cornell {
+  background-image: linear-gradient(90deg, transparent 26%, #dce8ef 26%, #dce8ef 28%, transparent 28%), repeating-linear-gradient(to bottom, transparent 0, transparent 7px, #dce8ef 8px);
+}
+.pageMiniPreview.paper-engineering {
+  background-image: linear-gradient(#dce8ef 1px,transparent 1px),linear-gradient(90deg,#dce8ef 1px,transparent 1px);
+  background-size: 5px 5px;
+}
+.pageMiniPreview.paper-isometric {
+  background-image: linear-gradient(30deg,#dce8ef 1px,transparent 1px),linear-gradient(150deg,#dce8ef 1px,transparent 1px);
+  background-size: 9px 15px;
+}
