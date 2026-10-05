@@ -36,6 +36,7 @@ export type InkStroke = {
   pressureSensitivity?: number;
   tipFlatness?: number;
   createdAt?: number;
+  shape?: "line" | "rectangle" | "ellipse" | "arrow";
 };
 
 export type Page = {
