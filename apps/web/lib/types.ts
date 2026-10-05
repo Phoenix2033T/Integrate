@@ -52,6 +52,7 @@ export type Page = {
   favorite: boolean;
   attachments: NoteAttachment[];
   revisions: Revision[];
+  createdAt?: number;
   updatedAt: number;
 };
 
@@ -73,6 +74,8 @@ export type Notebook = {
   /** Library metadata is optional so existing v4 workspaces migrate without data loss. */
   favorite?: boolean;
   createdAt?: number;
+  tags?: string[];
+  trashedAt?: number | null;
   /** Legacy v3 field kept only so older backups can migrate cleanly. */
   folder?: string;
   pages: Page[];
