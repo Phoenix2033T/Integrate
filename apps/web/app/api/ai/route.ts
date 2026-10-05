@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, clientAddress, requestTooLarge } from "../../../lib/serverRateLimit";
 
 type AiScope = "page" | "notebook" | "all";
 
@@ -31,6 +32,21 @@ function extractOutputText(payload: unknown): string {
 }
 
 export async function POST(request: NextRequest) {
+  if (process.env.INTEGRATE_AI_ENABLED === "false") {
+    return NextResponse.json({ error: "Integrate AI is temporarily unavailable." }, { status: 503 });
+  }
+  if (requestTooLarge(request.headers, 256_000)) {
+    return NextResponse.json({ error: "This AI request is too large." }, { status: 413 });
+  }
+  const limit = Math.max(1, Number(process.env.AI_RATE_LIMIT_PER_MINUTE || 12));
+  const rate = checkRateLimit(`ai:${clientAddress(request.headers)}`, limit);
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "Too many AI requests. Please try again shortly." },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } }
+    );
+  }
+
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
@@ -92,17 +108,19 @@ export async function POST(request: NextRequest) {
     body: JSON.stringify({
       model: process.env.OPENAI_MODEL || "gpt-6-luna",
       instructions,
-      input: contextualPrompt
+      input: contextualPrompt,
+      max_output_tokens: 2500
     })
   });
 
   const payload = await response.json();
+  const requestId = response.headers.get("x-request-id");
 
   if (!response.ok) {
     const message =
       payload?.error?.message ||
       `AI request failed with status ${response.status}.`;
-    return NextResponse.json({ error: message }, { status: response.status });
+    return NextResponse.json({ error: message, requestId }, { status: response.status });
   }
 
   const text = extractOutputText(payload);
@@ -110,5 +128,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "The AI returned an empty response." }, { status: 502 });
   }
 
-  return NextResponse.json({ text });
+  return NextResponse.json({ text, requestId });
 }
