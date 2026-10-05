@@ -326,6 +326,15 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current) window.clearInterval(recordingTimerRef.current);
+      const recorder = mediaRecorderRef.current;
+      if (recorder && recorder.state !== "inactive") recorder.stop();
+      recordingStreamRef.current?.getTracks().forEach((track) => track.stop());
+    };
+  }, []);
+
+  useEffect(() => {
     document.documentElement.dataset.theme = theme;
     if (hydrated) window.localStorage.setItem(THEME_KEY, theme);
   }, [theme, hydrated]);
