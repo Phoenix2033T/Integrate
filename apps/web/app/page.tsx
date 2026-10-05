@@ -1343,7 +1343,12 @@ export default function Home() {
                 )}
 
                 {tool === "audio" && (
-                  <div className="nestedChoices"><button className="recordButton"><span className="recordDot" /> Start recording</button><span className="contextHint">Audio notes will stay linked to this page.</span></div>
+                  <div className="nestedChoices">
+                    <button className={recording ? "recordButton recording" : "recordButton"} onClick={() => recording ? stopAudioRecording() : void startAudioRecording()}>
+                      <span className="recordDot" /> {recording ? `Stop · ${Math.floor(recordingElapsed / 60)}:${String(recordingElapsed % 60).padStart(2, "0")}` : "Start recording"}
+                    </button>
+                    <span className="contextHint">{recording ? "Keep writing — new ink is timestamped to this recording." : "Recordings stay linked to the page and your writing timeline."}</span>
+                  </div>
                 )}
 
                 {tool === "hand" && <span className="contextHint">Drag to move around the page without drawing.</span>}
@@ -1400,6 +1405,14 @@ export default function Home() {
                     playbackTime={playbackTime}
                   />
                 </div>
+                {selectedPage.attachments.some((attachment) => attachment.type === "audio") && (
+                  <div className="pageAudioShelf">
+                    <div className="pageAudioShelfHeader"><strong>Recordings</strong><span>Play a recording to replay the writing timeline.</span></div>
+                    {selectedPage.attachments.filter((attachment) => attachment.type === "audio").map((attachment) => (
+                      <AudioAttachment key={attachment.id} attachment={attachment} onTimeChange={setPlaybackTime} />
+                    ))}
+                  </div>
+                )}
               </article>
             </div>
 
