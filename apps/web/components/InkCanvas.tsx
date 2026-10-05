@@ -255,11 +255,11 @@ export default function InkCanvas({
         onPointerDown={(event) => {
           if (tool === "eraser" && !draftStroke) {
             event.preventDefault();
-            eraseStroke(stroke.id);
+            eraseStrokeAt(stroke, event);
           }
         }}
         onPointerEnter={(event) => {
-          if (tool === "eraser" && !draftStroke && event.buttons === 1) eraseStroke(stroke.id);
+          if (tool === "eraser" && !draftStroke && event.buttons === 1) eraseStrokeAt(stroke, event);
         }}
       >
         {drawing}
