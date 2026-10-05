@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import type { InkPoint, InkStroke, PaperStyle } from "../lib/types";
 import { createId } from "../lib/id";
 
-type Tool = "pen" | "highlighter" | "eraser" | "shape";
+type Tool = "pen" | "highlighter" | "eraser" | "shape" | "lasso";
 type ShapeKind = "line" | "rectangle" | "ellipse" | "arrow";
 type PenStyle = "fountain" | "ballpoint" | "brush" | "pencil";
 
@@ -23,6 +23,8 @@ type Props = {
   stabilization?: number;
   playbackTime?: number | null;
   shapeKind?: ShapeKind;
+  selectedStrokeIds?: string[];
+  onSelectionChange?: (ids: string[]) => void;
 };
 
 function pathFor(points: InkPoint[]) {
@@ -31,6 +33,18 @@ function pathFor(points: InkPoint[]) {
   return points
     .map((point, index) => index === 0 ? `M ${point.x} ${point.y}` : `L ${point.x} ${point.y}`)
     .join(" ");
+}
+
+function pointInPolygon(point: InkPoint, polygon: InkPoint[]) {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const a = polygon[i];
+    const b = polygon[j];
+    const intersects = ((a.y > point.y) !== (b.y > point.y)) &&
+      (point.x < (b.x - a.x) * (point.y - a.y) / ((b.y - a.y) || .00001) + a.x);
+    if (intersects) inside = !inside;
+  }
+  return inside;
 }
 
 function variableWidth(stroke: InkStroke, pressure: number, angle: number) {
@@ -48,10 +62,11 @@ export default function InkCanvas({
   strokes, onChange, tool, color, paper, enabled, width,
   penStyle = "ballpoint", tipSharpness = 75,
   pressureSensitivity = 75, tipFlatness = 33, stabilization = 35, playbackTime = null,
-  shapeKind = "line"
+  shapeKind = "line", selectedStrokeIds = [], onSelectionChange
 }: Props) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [draft, setDraft] = useState<InkStroke | null>(null);
+  const [lassoDraft, setLassoDraft] = useState<InkPoint[] | null>(null);
 
   function pointFromEvent(event: PointerEvent | React.PointerEvent<SVGSVGElement>): InkPoint {
     const svg = svgRef.current;
