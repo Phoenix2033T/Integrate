@@ -347,6 +347,26 @@ export default function Home() {
   }, [theme]);
 
   useEffect(() => {
+    if (!hydrated) return;
+    setSaveState("saving");
+    const timer = window.setTimeout(() => {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(workspace));
+      setSaveState("saved");
+    }, 220);
+    return () => window.clearTimeout(timer);
+  }, [workspace, hydrated]);
+
+  const selectedNotebook =
+    workspace.notebooks.find((notebook) => notebook.id === selectedNotebookId) ??
+    workspace.notebooks[0];
+
+  const selectedPage =
+    selectedNotebook?.pages.find((page) => page.id === selectedPageId) ??
+    selectedNotebook?.pages[0];
+
+  const currentFolder = workspace.folders.find((folder) => folder.id === currentFolderId) ?? null;
+
+  useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
       const editing = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.tagName === "SELECT" || target?.isContentEditable;
@@ -383,25 +403,6 @@ export default function Home() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [view, selectedNotebookId, selectedPageId, selectedPage?.strokes.length, redoStrokes.length, lastPenStyle]);
 
-  useEffect(() => {
-    if (!hydrated) return;
-    setSaveState("saving");
-    const timer = window.setTimeout(() => {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(workspace));
-      setSaveState("saved");
-    }, 220);
-    return () => window.clearTimeout(timer);
-  }, [workspace, hydrated]);
-
-  const selectedNotebook =
-    workspace.notebooks.find((notebook) => notebook.id === selectedNotebookId) ??
-    workspace.notebooks[0];
-
-  const selectedPage =
-    selectedNotebook?.pages.find((page) => page.id === selectedPageId) ??
-    selectedNotebook?.pages[0];
-
-  const currentFolder = workspace.folders.find((folder) => folder.id === currentFolderId) ?? null;
 
   const visibleFolders = useMemo(
     () => workspace.folders.filter((folder) => folder.parentId === currentFolderId),
