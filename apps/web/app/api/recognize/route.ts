@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, clientAddress, requestTooLarge } from "../../../lib/serverRateLimit";
 
 type RecognitionRequest = {
   imageDataUrl?: string;
@@ -27,6 +28,21 @@ function extractOutputText(payload: unknown): string {
 }
 
 export async function POST(request: NextRequest) {
+  if (process.env.INTEGRATE_AI_ENABLED === "false") {
+    return NextResponse.json({ error: "Handwriting recognition is temporarily unavailable." }, { status: 503 });
+  }
+  if (requestTooLarge(request.headers, 5_500_000)) {
+    return NextResponse.json({ error: "This handwriting image is too large." }, { status: 413 });
+  }
+  const limit = Math.max(1, Number(process.env.RECOGNITION_RATE_LIMIT_PER_MINUTE || 8));
+  const rate = checkRateLimit(`recognize:${clientAddress(request.headers)}`, limit);
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "Too many recognition requests. Please try again shortly." },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } }
+    );
+  }
+
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
@@ -64,6 +80,7 @@ export async function POST(request: NextRequest) {
     },
     body: JSON.stringify({
       model: process.env.OPENAI_MODEL || "gpt-6-luna",
+      max_output_tokens: 4000,
       input: [
         {
           role: "user",
@@ -77,9 +94,10 @@ export async function POST(request: NextRequest) {
   });
 
   const payload = await response.json();
+  const requestId = response.headers.get("x-request-id");
   if (!response.ok) {
     return NextResponse.json(
-      { error: payload?.error?.message || "Handwriting recognition failed." },
+      { error: payload?.error?.message || "Handwriting recognition failed.", requestId },
       { status: response.status }
     );
   }
@@ -89,5 +107,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No handwriting text was recognized." }, { status: 502 });
   }
 
-  return NextResponse.json({ text });
+  return NextResponse.json({ text, requestId });
 }
