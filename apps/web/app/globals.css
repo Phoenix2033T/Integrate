@@ -3034,3 +3034,64 @@ textarea:focus-visible {
   .editorShell, .notebookWorkspace, .focusCanvas { background: #fff !important; padding: 0 !important; margin: 0 !important; }
   .focusCanvas .document { box-shadow: none !important; margin: 0 auto !important; }
 }
+
+
+/* Lecture recording and timeline playback */
+.recordButton.recording {
+  background: rgba(239,68,68,.16) !important;
+  color: #ff9b9b !important;
+  border-color: rgba(239,68,68,.3) !important;
+}
+.recordButton.recording .recordDot { animation: integratePulse 1.1s ease-in-out infinite; }
+@keyframes integratePulse { 50% { transform: scale(.72); opacity: .45; } }
+.pageAudioShelf {
+  position: relative;
+  z-index: 8;
+  margin: 18px 28px 30px;
+  padding: 13px;
+  border: 1px solid var(--paper-line);
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--paper) 92%, var(--accentSoft));
+  color: var(--paper-ink);
+}
+.pageAudioShelfHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 3px 10px;
+}
+.pageAudioShelfHeader strong { font-size: 11px; }
+.pageAudioShelfHeader span { color: var(--muted); font-size: 8px; }
+.audioAttachment {
+  display: grid;
+  grid-template-columns: minmax(130px, .75fr) minmax(180px, 1.25fr);
+  gap: 12px;
+  align-items: center;
+  padding: 9px 10px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--surface-soft) 60%, transparent);
+}
+.audioAttachment + .audioAttachment { margin-top: 7px; }
+.audioAttachmentTitle {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.audioAttachmentTitle > span:last-child { min-width: 0; display: grid; gap: 2px; }
+.audioAttachmentTitle strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 9px;
+}
+.audioAttachmentTitle small { color: var(--muted); font-size: 8px; }
+.audioBadge { color: #ef4444; font-size: 10px; }
+.audioAttachment audio { width: 100%; height: 30px; }
+
+@media (max-width: 620px) {
+  .pageAudioShelf { margin-inline: 12px; }
+  .pageAudioShelfHeader span { display: none; }
+  .audioAttachment { grid-template-columns: 1fr; }
+}
