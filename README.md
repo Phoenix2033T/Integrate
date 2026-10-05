@@ -1,135 +1,107 @@
 # Integrate
 
-Integrate is a multi-native AI-powered note-taking and learning platform for every subject.
+Integrate is a local-first notebook and study workspace built for handwriting, typed notes, lecture capture, STEM work, and optional AI assistance.
 
-## Vision
+## Release status
 
-Integrate should work as an excellent normal notes app first, then add context-aware intelligence on top. The goal is a single workspace for handwriting, typing, PDFs, diagrams, math, history, science, English, computer science, and general studying.
+The web app is now organized as a **0.9.0 release candidate**. The release gate is an exact-commit TypeScript check plus a Next.js production build in GitHub Actions. Do not tag 1.0 until that gate and the manual smoke-test checklist in `docs/RELEASE_CHECKLIST.md` pass.
 
-## Current milestone
+The Apple and Windows folders are native-client foundations, not store-ready binaries. The first releasable product is the installable web/PWA client.
 
-The web client now includes the third major product layer:
+## What works in the web release candidate
 
-- notebook → page organization
-- notebook folders
-- create, rename, and organize notebooks
-- create, switch, favorite, and delete pages
-- search across titles, subjects, note text, tags, and notebooks
-- typed notes with lightweight formatting helpers
-- pen, highlighter, eraser, ink color, and undo
-- blank, lined, grid, and dotted paper
-- tags
-- image attachments
-- small PDF imports with persistent local storage
-- autosave status
-- page version snapshots and restore
-- migration from earlier Integrate local-storage formats
-- page / notebook / all-notes AI context scopes
-- real server-side AI requests
-- generated summaries, quizzes, explanations, gap analysis, study guides, and flashcards
-- shared core schemas for future native clients
-- GitHub Actions web build CI
+- nested folders and customizable notebook covers
+- Favorites, Recent, Trash/restore, search, sorting, tags, grid/list library views
+- multiple pages with thumbnail navigation, reorder, duplicate, and delete
+- pressure-aware pen styles and highlighter
+- stroke and precision erasers
+- freeform lasso selection with move/delete transforms
+- vector lines, rectangles, ellipses, and arrows
+- blank, ruled, grid, dotted, Cornell, engineering, and isometric paper
+- typed notes and recognized-handwriting context
+- local lecture audio recording and playback
+- timestamped ink foundation for audio-linked writing replay
+- deterministic Math Assist for algebra-step equivalence
+- optional grounded AI actions and handwriting recognition
+- local autosave
+- JSON backup/import
+- Markdown export and print/save-as-PDF
+- light/dark appearance
+- installable PWA with offline shell caching
+- privacy/product disclosure pages
+- health endpoint, security headers, request-size limits, and basic AI abuse controls
 
-## Run the web app
+## Run locally
 
-Requirements:
-
-- Node.js 20+
-- npm 10+
-
-From the repository root:
+Requirements: Node.js 24 and npm.
 
 ```bash
 npm install
 npm run dev:web
 ```
 
-Then open:
+Open `http://localhost:3000`.
 
-```text
-http://localhost:3000
-```
-
-## Enable Integrate AI
-
-Copy the example environment file:
+For iPad testing on the same Wi-Fi network:
 
 ```bash
-cp apps/web/.env.example apps/web/.env.local
+npm --workspace @integrate/web run dev -- --hostname 0.0.0.0
 ```
 
-Then edit `apps/web/.env.local`:
+Then open the Network address printed by Next.js.
 
-```env
-OPENAI_API_KEY=your_api_key_here
-OPENAI_MODEL=gpt-6-luna
+## AI configuration
+
+Copy `apps/web/.env.example` to `apps/web/.env.local`, add a server-side API key, and restart the server.
+
+The default model is `gpt-6-luna`. The key is read by server routes and is not intentionally sent to the browser. AI can be disabled with `INTEGRATE_AI_ENABLED=false`. Basic per-instance request limits are configurable; a broad public launch with hosted accounts should replace these with account/edge-backed quotas.
+
+## Production build
+
+```bash
+npm run typecheck:web
+npm run build:web
+npm --workspace @integrate/web run start
 ```
 
-Restart the development server after changing environment variables.
+Health check: `GET /api/health`.
 
-The API key is read only by the Next.js server route. It is never intentionally sent to the browser.
+A portable Docker build is included:
 
-## AI architecture
-
-The browser sends:
-
-```text
-user request
-+ selected scope (page / notebook / all notes)
-+ grounded note text and metadata
+```bash
+docker build -t integrate .
+docker run --rm -p 3000:3000 --env-file apps/web/.env.local integrate
 ```
 
-to:
+Use HTTPS in production.
 
-```text
-POST /api/ai
-```
+## Data model and privacy
 
-The server then calls the OpenAI Responses API and returns only the generated answer to the client.
+The current release is local-first. Workspace data is stored in browser storage; recorded audio uses IndexedDB. AI requests transmit only the context needed for the action the user invokes. There is no hosted Integrate account database or automatic cross-device sync in this release.
 
-Handwritten ink currently contributes metadata indicating that ink exists, but handwriting OCR is not implemented yet. That will be a separate recognition layer before symbolic math checking.
+Because clearing browser site data can remove local work, users should export backups for important notebooks.
 
-## Attachment limits
-
-For this local-first MVP, files up to about 1.5 MB can be persisted as browser data URLs. Larger files keep their metadata but are not fully persisted. Production storage will move attachments into object storage instead of browser localStorage.
-
-## Planned platform architecture
+## Repository
 
 ```text
 apps/
-  web/        Next.js web client
-  apple/      SwiftUI iPhone, iPad, and macOS client
-  windows/    WinUI 3 Windows client
-  server/     backend services as the project grows
+  web/        Next.js release candidate
+  apple/      SwiftUI native-client foundation
+  windows/    WinUI native-client foundation
 
 packages/
   core/       shared document/domain model
-  ai/         AI orchestration contracts
-  math/       symbolic math and step-checking contracts
-  sync/       synchronization model
-  study/      quizzes, flashcards, and mastery model
+
+docs/
+  PRODUCT_ROADMAP.md
+  ARCHITECTURE.md
+  RUNBOOK.md
+  STATUS.md
+  RELEASE_CHECKLIST.md
 ```
 
-## Product pillars
+## Release boundary
 
-1. Notes — handwriting, typing, PDFs, images, drawing, organization, search.
-2. Intelligence — ask a page, notebook, selection, or all notes with grounded context.
-3. STEM — handwriting-to-math, deterministic step checking, graphs, formulas, and code cells.
-4. Study — summaries, study guides, quizzes, flashcards, practice tests, timelines, and concept maps.
-5. Multi-native — native Apple and Windows experiences plus a first-class web client.
+Version 1.0 of the web product does not need to pretend cloud collaboration exists. Authentication, encrypted hosted sync, collaborative editing, production account quotas, and store-signed native binaries are separate hosted/native milestones and must be completed before those capabilities are advertised.
 
-## Next major layers
-
-- handwriting OCR / math recognition
-- deterministic symbolic math checking
-- production auth, database, sync, and object storage
-- richer block editor
-- full PDF annotation
-- image-aware AI context
-- spaced repetition and mastery tracking
-- native Apple client
-- native Windows client
-
-## Status
-
-Active development. The current web app is a functional local-first prototype, not yet a production release.
+See `docs/RELEASE_CHECKLIST.md` for the release gate.
