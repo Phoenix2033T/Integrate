@@ -1,4 +1,4 @@
-export type PaperStyle = "blank" | "lined" | "grid" | "dots";
+export type PaperStyle = "blank" | "lined" | "grid" | "dots" | "cornell" | "engineering" | "isometric";
 export type AiScope = "page" | "notebook" | "all";
 
 export type InkPoint = {
