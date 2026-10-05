@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import InkCanvas from "../components/InkCanvas";
 import AudioAttachment from "../components/AudioAttachment";
+import MathAssist from "../components/MathAssist";
 import { saveMediaBlob } from "../lib/mediaStore";
 import { strokesToSvgDataUrl } from "../lib/ink";
 import { createId } from "../lib/id";
@@ -281,6 +282,7 @@ export default function Home() {
   const [recording, setRecording] = useState(false);
   const [recordingElapsed, setRecordingElapsed] = useState(0);
   const [playbackTime, setPlaybackTime] = useState<number | null>(null);
+  const [mathOpen, setMathOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const workspaceImportRef = useRef<HTMLInputElement | null>(null);
@@ -1274,8 +1276,7 @@ export default function Home() {
                     </button>
                     <button onClick={() => {
                       setPenSettingsOpen(false);
-                      setAiOpen(true);
-                      setAiPrompt("Help me understand and check the math in my notes. If handwriting is missing, ask me to recognize it first.");
+                      setMathOpen(true);
                     }}>
                       <span>Math assist</span><span>›</span>
                     </button>
@@ -1433,6 +1434,8 @@ export default function Home() {
           </section>
         </div>
       )}
+
+      {mathOpen && selectedPage && <MathAssist initialText={selectedPage.recognizedInk} onClose={() => setMathOpen(false)} />}
 
       {aiOpen && selectedPage && (
         <aside className="aiPanel editorAiPanel">
