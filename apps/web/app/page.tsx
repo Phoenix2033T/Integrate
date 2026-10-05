@@ -285,6 +285,7 @@ export default function Home() {
   const [mathOpen, setMathOpen] = useState(false);
   const [shapeKind, setShapeKind] = useState<"line" | "rectangle" | "ellipse" | "arrow">("line");
   const [selectedStrokeIds, setSelectedStrokeIds] = useState<string[]>([]);
+  const [eraserMode, setEraserMode] = useState<"stroke" | "precision">("stroke");
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const workspaceImportRef = useRef<HTMLInputElement | null>(null);
@@ -1378,7 +1379,11 @@ export default function Home() {
                 )}
 
                 {tool === "eraser" && (
-                  <div className="nestedChoices"><button className="segmented active">Stroke</button><button className="segmented">Precision</button></div>
+                  <div className="nestedChoices">
+                    <button className={eraserMode === "stroke" ? "segmented active" : "segmented"} onClick={() => setEraserMode("stroke")}>Stroke</button>
+                    <button className={eraserMode === "precision" ? "segmented active" : "segmented"} onClick={() => setEraserMode("precision")}>Precision</button>
+                    <span className="contextHint">{eraserMode === "stroke" ? "Remove a complete stroke with one touch." : "Erase only the part of a freehand stroke you touch."}</span>
+                  </div>
                 )}
 
                 {tool === "text" && (
@@ -1449,6 +1454,7 @@ export default function Home() {
                     shapeKind={shapeKind}
                     selectedStrokeIds={selectedStrokeIds}
                     onSelectionChange={setSelectedStrokeIds}
+                    eraserMode={eraserMode}
                   />
                 </div>
                 {selectedPage.attachments.some((attachment) => attachment.type === "audio") && (
