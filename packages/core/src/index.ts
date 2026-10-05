@@ -65,6 +65,8 @@ export type Notebook = {
   emoji: string;
   color?: string;
   folderId: string | null;
+  favorite?: boolean;
+  createdAt?: number;
   folder?: string;
   pages: Page[];
   updatedAt?: number;
