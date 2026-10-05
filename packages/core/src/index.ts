@@ -67,6 +67,8 @@ export type Notebook = {
   folderId: string | null;
   favorite?: boolean;
   createdAt?: number;
+  tags?: string[];
+  trashedAt?: number | null;
   folder?: string;
   pages: Page[];
   updatedAt?: number;
