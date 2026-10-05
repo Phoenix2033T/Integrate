@@ -71,3 +71,25 @@ These require deployment accounts, credentials, platform signing, or additional 
 - production monitoring, billing, rate limits, and legal/privacy operations
 
 The current repository is a coherent portfolio-grade v1 and a strong base for those production layers.
+
+
+## Phase 1 notebook-foundation additions
+
+- responsive library with nested folders and no permanent sidebar
+- customizable folder colors and symbols
+- customizable notebook covers, symbols, tags, and folder placement
+- functional Favorites, Recent, Trash/restore, sorting, and grid/list views
+- page thumbnail navigator with reorder, duplicate, and delete
+- expanded academic paper templates
+- nested stylus toolbar and persistent pen controls
+- pressure-aware fountain and brush ink
+- stroke and precision eraser modes
+- freeform lasso selection with move/delete transforms
+- vector geometry drawing tools
+- local lecture audio recording in IndexedDB
+- timestamped ink with audio-linked stroke replay
+- deterministic Math Assist panel
+- JSON backup/import, Markdown export, and print/PDF workflow
+- keyboard shortcuts for core writing actions
+
+Next work includes positioned text boxes, placed/resizable media, richer PDF annotation, pan/zoom and study-tool engines, version-history UI, deeper accessibility/QA, and splitting the remaining workspace UI into smaller components.
