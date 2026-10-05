@@ -26,11 +26,13 @@ export type InkStroke = {
 export type NoteAttachment = {
   id: string;
   name: string;
-  type: "image" | "pdf";
+  type: "image" | "pdf" | "audio";
   mimeType: string;
   dataUrl?: string;
   size: number;
   createdAt: number;
+  startedAt?: number;
+  durationMs?: number;
 };
 
 export type Revision = {
