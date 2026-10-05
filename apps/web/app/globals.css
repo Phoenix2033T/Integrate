@@ -2682,3 +2682,139 @@ textarea:focus-visible {
     max-height: min(620px, calc(100dvh - 170px));
   }
 }
+
+
+/* Library interaction polish: favorites and adaptive grid/list views. */
+.notebookTileWrap {
+  position: relative;
+  min-width: 0;
+}
+.notebookTileWrap .notebookTile {
+  width: 100%;
+}
+.notebookMeta {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.notebookFavoriteButton {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  z-index: 3;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 10px;
+  background: rgba(5,22,34,.46);
+  color: rgba(255,255,255,.82);
+  box-shadow: 0 6px 16px rgba(0,0,0,.12);
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  font-size: 17px;
+  transition: transform .16s ease, background .16s ease, color .16s ease;
+}
+.notebookFavoriteButton:hover {
+  transform: translateY(-1px) scale(1.04);
+  background: rgba(8,31,48,.72);
+}
+.notebookFavoriteButton.active {
+  color: #ffd166;
+  background: rgba(8,31,48,.8);
+}
+.libraryIconButton.layoutQuickButton {
+  font-size: 19px;
+  line-height: 1;
+}
+.notebookGrid.notebookList {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 9px;
+  max-width: 920px;
+}
+.notebookList .notebookTileWrap {
+  min-height: 88px;
+}
+.notebookList .notebookTileCard {
+  min-height: 88px;
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  align-items: center;
+  gap: 15px;
+  padding: 9px 54px 9px 9px;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+}
+.notebookList .notebookTileCard:hover {
+  background: var(--surface-hover);
+  border-color: var(--line-strong);
+}
+.notebookList .notebookCover {
+  width: 54px;
+  height: 70px;
+  min-height: 70px;
+  border-radius: 8px;
+}
+.notebookList .notebookSpine { width: 6px; }
+.notebookList .coverEmoji { font-size: 18px; }
+.notebookList .coverLabel,
+.notebookList .coverLines,
+.notebookList .notebookPageEdge { display: none; }
+.notebookList .notebookMeta strong {
+  font-size: 14px;
+}
+.notebookList .notebookMeta small {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.notebookList .notebookFavoriteButton {
+  top: 50%;
+  transform: translateY(-50%);
+  right: 13px;
+}
+.notebookList .notebookFavoriteButton:hover {
+  transform: translateY(calc(-50% - 1px)) scale(1.04);
+}
+.libraryEmptyState {
+  min-height: 180px;
+  padding: 30px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 7px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 18px;
+  color: var(--muted);
+  text-align: center;
+}
+.libraryEmptyState > span {
+  font-size: 34px;
+  color: var(--accent);
+}
+.libraryEmptyState strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+.libraryEmptyState small {
+  max-width: 260px;
+  line-height: 1.5;
+}
+.editorHeaderActions .headerAction.favorite {
+  font-size: 18px;
+  color: var(--muted);
+}
+.editorHeaderActions .headerAction.favorite.active {
+  color: #ffd166;
+}
+
+@media (max-width: 760px) {
+  .libraryQuickNav { display: none; }
+  .libraryTopActions .newLibraryButton { padding-inline: 11px; }
+  .notebookGrid.notebookList { max-width: none; }
+}
