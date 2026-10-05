@@ -679,6 +679,58 @@ export default function Home() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
+  function downloadTextFile(filename: string, content: string, mimeType: string) {
+    const blob = new Blob([content], { type: mimeType });
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = objectUrl;
+    anchor.download = filename;
+    anchor.click();
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+  }
+
+  function exportWorkspaceBackup() {
+    const date = new Date().toISOString().slice(0, 10);
+    downloadTextFile(`integrate-backup-${date}.json`, JSON.stringify(workspace, null, 2), "application/json");
+  }
+
+  async function importWorkspaceBackup(file: File | null) {
+    if (!file) return;
+    try {
+      const parsed = JSON.parse(await file.text()) as IntegrateWorkspace;
+      if (parsed.version !== 4 || !Array.isArray(parsed.folders) || !Array.isArray(parsed.notebooks)) {
+        throw new Error("This is not a compatible Integrate backup.");
+      }
+      setWorkspace({
+        ...parsed,
+        notebooks: parsed.notebooks.map((notebook) => ({
+          ...notebook,
+          folderId: notebook.folderId ?? null,
+          pages: notebook.pages.map(normalizePage)
+        }))
+      });
+      setCurrentFolderId(null);
+      setLibraryMode("documents");
+      setQuery("");
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Could not import this backup.");
+    }
+    if (workspaceImportRef.current) workspaceImportRef.current.value = "";
+  }
+
+  function exportNotebookMarkdown() {
+    if (!selectedNotebook) return;
+    const markdown = selectedNotebook.pages.map((page) => [
+      `# ${page.title}`,
+      page.subject ? `**Subject:** ${page.subject}` : "",
+      page.tags.length ? `**Tags:** ${page.tags.join(", ")}` : "",
+      page.body,
+      page.recognizedInk ? `## Recognized handwriting\n\n${page.recognizedInk}` : ""
+    ].filter(Boolean).join("\n\n")).join("\n\n---\n\n");
+    const safeName = selectedNotebook.title.replace(/[^a-z0-9-_]+/gi, "-").replace(/^-|-$/g, "") || "notebook";
+    downloadTextFile(`${safeName}.md`, markdown, "text/markdown");
+  }
+
   function buildAiContext(scope: AiScope) {
     const renderPage = (page: Page) =>
       [
