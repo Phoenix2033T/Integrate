@@ -16,8 +16,9 @@ import type {
 
 type ThemeMode = "light" | "dark";
 type AppView = "home" | "notebook";
-type LibraryMode = "documents" | "favorites" | "recent";
+type LibraryMode = "documents" | "favorites" | "recent" | "trash";
 type LibraryLayout = "grid" | "list";
+type LibrarySort = "updated" | "title" | "created";
 type Tool =
   | "fountain"
   | "ballpoint"
@@ -59,6 +60,7 @@ function normalizePage(page: Partial<Page> & { id?: string }): Page {
     favorite: page.favorite || false,
     attachments: page.attachments || [],
     revisions: page.revisions || [],
+    createdAt: page.createdAt || page.updatedAt || Date.now(),
     updatedAt: page.updatedAt || Date.now()
   };
 }
@@ -250,6 +252,7 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [libraryMode, setLibraryMode] = useState<LibraryMode>("documents");
   const [libraryLayout, setLibraryLayout] = useState<LibraryLayout>("grid");
+  const [librarySort, setLibrarySort] = useState<LibrarySort>("updated");
   const [theme, setTheme] = useState<ThemeMode>("light");
   const [hydrated, setHydrated] = useState(false);
   const [saveState, setSaveState] = useState<"saved" | "saving">("saved");
@@ -263,6 +266,8 @@ export default function Home() {
   const [redoStrokes, setRedoStrokes] = useState<Page["strokes"]>([]);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [folderEditorId, setFolderEditorId] = useState<string | null>(null);
+  const [notebookEditorId, setNotebookEditorId] = useState<string | null>(null);
+  const [pageNavigatorOpen, setPageNavigatorOpen] = useState(false);
 
   const [aiOpen, setAiOpen] = useState(false);
   const [aiScope, setAiScope] = useState<AiScope>("page");
@@ -273,6 +278,7 @@ export default function Home() {
   const [recognitionLoading, setRecognitionLoading] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const workspaceImportRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem(THEME_KEY);
@@ -354,12 +360,12 @@ export default function Home() {
   );
 
   const visibleNotebooks = useMemo(
-    () => workspace.notebooks.filter((notebook) => notebook.folderId === currentFolderId),
+    () => workspace.notebooks.filter((notebook) => notebook.folderId === currentFolderId && !notebook.trashedAt),
     [workspace.notebooks, currentFolderId]
   );
 
   const recentNotebooks = useMemo(
-    () => [...workspace.notebooks].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).slice(0, 6),
+    () => [...workspace.notebooks].filter((notebook) => !notebook.trashedAt).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)).slice(0, 12),
     [workspace.notebooks]
   );
 
@@ -367,19 +373,29 @@ export default function Home() {
     const q = query.trim().toLowerCase();
     if (!q) return null;
     return workspace.notebooks.filter((notebook) => {
-      const pageText = notebook.pages.map((page) => `${page.title} ${page.subject} ${page.body} ${page.recognizedInk}`).join(" ");
-      return `${notebook.title} ${pageText}`.toLowerCase().includes(q);
+      if (notebook.trashedAt) return false;
+      const pageText = notebook.pages.map((page) => `${page.title} ${page.subject} ${page.body} ${page.recognizedInk} ${page.tags.join(" ")}`).join(" ");
+      return `${notebook.title} ${(notebook.tags || []).join(" ")} ${pageText}`.toLowerCase().includes(q);
     });
   }, [query, workspace.notebooks]);
 
   const libraryNotebooks = useMemo(() => {
-    if (searchResults) return searchResults;
-    if (libraryMode === "favorites") return workspace.notebooks.filter((notebook) => notebook.favorite);
-    if (libraryMode === "recent") return recentNotebooks;
-    if (currentFolder) return visibleNotebooks;
-    const rootNotebooks = workspace.notebooks.filter((notebook) => notebook.folderId === null);
-    return rootNotebooks.length ? rootNotebooks : recentNotebooks;
-  }, [searchResults, libraryMode, workspace.notebooks, recentNotebooks, currentFolder, visibleNotebooks]);
+    let items: Notebook[];
+    if (searchResults) items = searchResults;
+    else if (libraryMode === "favorites") items = workspace.notebooks.filter((notebook) => notebook.favorite && !notebook.trashedAt);
+    else if (libraryMode === "recent") items = recentNotebooks;
+    else if (libraryMode === "trash") items = workspace.notebooks.filter((notebook) => notebook.trashedAt);
+    else if (currentFolder) items = visibleNotebooks;
+    else {
+      const rootNotebooks = workspace.notebooks.filter((notebook) => notebook.folderId === null && !notebook.trashedAt);
+      items = rootNotebooks.length ? rootNotebooks : recentNotebooks;
+    }
+    return [...items].sort((a, b) => {
+      if (librarySort === "title") return a.title.localeCompare(b.title);
+      if (librarySort === "created") return (b.createdAt || 0) - (a.createdAt || 0);
+      return (b.updatedAt || 0) - (a.updatedAt || 0);
+    });
+  }, [searchResults, libraryMode, librarySort, workspace.notebooks, recentNotebooks, currentFolder, visibleNotebooks]);
 
   const breadcrumbs = useMemo(() => {
     const result: Folder[] = [];
