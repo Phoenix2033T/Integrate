@@ -81,7 +81,14 @@ export default function InkCanvas({
   }
 
   function beginStroke(event: React.PointerEvent<SVGSVGElement>) {
-    if (!enabled || tool === "eraser" || !event.isPrimary) return;
+    if (!enabled || !event.isPrimary) return;
+    if (tool === "lasso") {
+      event.preventDefault();
+      event.currentTarget.setPointerCapture(event.pointerId);
+      setLassoDraft([pointFromEvent(event)]);
+      return;
+    }
+    if (tool === "eraser") return;
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     const highlighter = tool === "highlighter";
@@ -102,6 +109,11 @@ export default function InkCanvas({
   }
 
   function extendStroke(event: React.PointerEvent<SVGSVGElement>) {
+    if (tool === "lasso" && lassoDraft) {
+      const point = pointFromEvent(event);
+      setLassoDraft((current) => current ? [...current, point] : current);
+      return;
+    }
     if (!draft) return;
     if (draft.shape) {
       const endpoint = pointFromEvent(event);
@@ -134,6 +146,15 @@ export default function InkCanvas({
   }
 
   function finishStroke(event: React.PointerEvent<SVGSVGElement>) {
+    if (tool === "lasso" && lassoDraft) {
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+      const ids = lassoDraft.length >= 3
+        ? strokes.filter((stroke) => stroke.points.some((point) => pointInPolygon(point, lassoDraft))).map((stroke) => stroke.id)
+        : [];
+      onSelectionChange?.(ids);
+      setLassoDraft(null);
+      return;
+    }
     if (!draft) return;
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
