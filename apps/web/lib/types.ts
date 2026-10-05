@@ -70,6 +70,9 @@ export type Notebook = {
   emoji: string;
   color?: string;
   folderId: string | null;
+  /** Library metadata is optional so existing v4 workspaces migrate without data loss. */
+  favorite?: boolean;
+  createdAt?: number;
   /** Legacy v3 field kept only so older backups can migrate cleanly. */
   folder?: string;
   pages: Page[];
