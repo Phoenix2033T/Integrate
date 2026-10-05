@@ -512,6 +512,15 @@ export default function Home() {
     }));
   }
 
+  function updateNotebook(notebookId: string, patch: Partial<Notebook>) {
+    setWorkspace((current) => ({
+      ...current,
+      notebooks: current.notebooks.map((notebook) =>
+        notebook.id === notebookId ? { ...notebook, ...patch, updatedAt: Date.now() } : notebook
+      )
+    }));
+  }
+
   function toggleNotebookFavorite(notebookId: string) {
     setWorkspace((current) => ({
       ...current,
@@ -813,6 +822,7 @@ export default function Home() {
     const notebookBeingEdited = workspace.notebooks.find((notebook) => notebook.id === notebookEditorId) ?? null;
     const folderColors = ["#5aa9e6", "#6d9eeb", "#8b7cf6", "#d16ba5", "#ef6f6c", "#f4a261", "#f6c453", "#58b09c", "#39a9a3", "#64748b"];
     const folderSymbols = ["📁", "🎓", "📚", "∑", "🧪", "✦", "🎨", "💡", "⚙", "🏠", "⭐", "🗂️"];
+    const notebookSymbols = ["📘", "📓", "📒", "🧠", "∫", "∑", "🧪", "⚛", "💻", "✍", "🎨", "🌎"];
 
     return (
       <main className="libraryShell libraryShellNoSidebar">
@@ -931,6 +941,44 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {notebookBeingEdited && (
+          <div className="folderEditorBackdrop" role="presentation" onMouseDown={() => setNotebookEditorId(null)}>
+            <section className="folderEditorCard notebookEditorCard" role="dialog" aria-modal="true" aria-label="Notebook options" onMouseDown={(event) => event.stopPropagation()}>
+              <div className="folderEditorHeader">
+                <div><span className="eyebrow">Notebook appearance</span><h2>Customize notebook</h2></div>
+                <button className="closeFolderEditor" onClick={() => setNotebookEditorId(null)}>×</button>
+              </div>
+              <label className="folderNameField">Name<input value={notebookBeingEdited.title} onChange={(event) => updateNotebook(notebookBeingEdited.id, { title: event.target.value })} /></label>
+              <div className="folderEditorSection">
+                <strong>Cover color</strong>
+                <div className="folderColorChoices">
+                  {folderColors.map((color) => <button key={color} className={notebookBeingEdited.color === color ? "active" : ""} style={{ background: color }} onClick={() => updateNotebook(notebookBeingEdited.id, { color })} aria-label={`Use notebook color ${color}`} />)}
+                </div>
+              </div>
+              <div className="folderEditorSection">
+                <strong>Cover symbol</strong>
+                <div className="folderSymbolChoices">
+                  {notebookSymbols.map((symbol) => <button key={symbol} className={notebookBeingEdited.emoji === symbol ? "active" : ""} onClick={() => updateNotebook(notebookBeingEdited.id, { emoji: symbol })}>{symbol}</button>)}
+                </div>
+              </div>
+              <label className="folderNameField">Folder
+                <select value={notebookBeingEdited.folderId || ""} onChange={(event) => updateNotebook(notebookBeingEdited.id, { folderId: event.target.value || null })}>
+                  <option value="">Documents</option>
+                  {workspace.folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}
+                </select>
+              </label>
+              <label className="folderNameField">Tags
+                <input value={(notebookBeingEdited.tags || []).join(", ")} placeholder="school, calculus, exam" onChange={(event) => updateNotebook(notebookBeingEdited.id, { tags: event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean) })} />
+              </label>
+              <div className="notebookEditorActions">
+                <button className="subtleButton" onClick={() => toggleNotebookFavorite(notebookBeingEdited.id)}>{notebookBeingEdited.favorite ? "★ Favorited" : "☆ Add to favorites"}</button>
+                <button className="subtleButton dangerText" onClick={() => { trashNotebook(notebookBeingEdited.id); setNotebookEditorId(null); }}>Move to Trash</button>
+              </div>
+              <button className="primary folderDoneButton" onClick={() => setNotebookEditorId(null)}>Done</button>
+            </section>
+          </div>
+        )}
 
         {folderBeingEdited && (
           <div className="folderEditorBackdrop" role="presentation" onMouseDown={() => setFolderEditorId(null)}>
