@@ -16,6 +16,8 @@ import type {
 
 type ThemeMode = "light" | "dark";
 type AppView = "home" | "notebook";
+type LibraryMode = "documents" | "favorites" | "recent";
+type LibraryLayout = "grid" | "list";
 type Tool =
   | "fountain"
   | "ballpoint"
@@ -246,6 +248,8 @@ export default function Home() {
   const [selectedNotebookId, setSelectedNotebookId] = useState("general");
   const [selectedPageId, setSelectedPageId] = useState("welcome");
   const [query, setQuery] = useState("");
+  const [libraryMode, setLibraryMode] = useState<LibraryMode>("documents");
+  const [libraryLayout, setLibraryLayout] = useState<LibraryLayout>("grid");
   const [theme, setTheme] = useState<ThemeMode>("light");
   const [hydrated, setHydrated] = useState(false);
   const [saveState, setSaveState] = useState<"saved" | "saving">("saved");
@@ -363,10 +367,19 @@ export default function Home() {
     const q = query.trim().toLowerCase();
     if (!q) return null;
     return workspace.notebooks.filter((notebook) => {
-      const pageText = notebook.pages.map((page) => `${page.title} ${page.subject} ${page.body}`).join(" ");
+      const pageText = notebook.pages.map((page) => `${page.title} ${page.subject} ${page.body} ${page.recognizedInk}`).join(" ");
       return `${notebook.title} ${pageText}`.toLowerCase().includes(q);
     });
   }, [query, workspace.notebooks]);
+
+  const libraryNotebooks = useMemo(() => {
+    if (searchResults) return searchResults;
+    if (libraryMode === "favorites") return workspace.notebooks.filter((notebook) => notebook.favorite);
+    if (libraryMode === "recent") return recentNotebooks;
+    if (currentFolder) return visibleNotebooks;
+    const rootNotebooks = workspace.notebooks.filter((notebook) => notebook.folderId === null);
+    return rootNotebooks.length ? rootNotebooks : recentNotebooks;
+  }, [searchResults, libraryMode, workspace.notebooks, recentNotebooks, currentFolder, visibleNotebooks]);
 
   const breadcrumbs = useMemo(() => {
     const result: Folder[] = [];
@@ -449,6 +462,8 @@ export default function Home() {
       emoji: "📓",
       color: "#5aa9e6",
       folderId: currentFolderId,
+      favorite: false,
+      createdAt: Date.now(),
       pages: [page],
       updatedAt: Date.now()
     };
@@ -477,6 +492,15 @@ export default function Home() {
       ...current,
       notebooks: current.notebooks.map((notebook) =>
         notebook.id === selectedNotebook.id ? { ...notebook, ...patch, updatedAt: Date.now() } : notebook
+      )
+    }));
+  }
+
+  function toggleNotebookFavorite(notebookId: string) {
+    setWorkspace((current) => ({
+      ...current,
+      notebooks: current.notebooks.map((notebook) =>
+        notebook.id === notebookId ? { ...notebook, favorite: !notebook.favorite } : notebook
       )
     }));
   }
@@ -632,7 +656,7 @@ export default function Home() {
   const drawingEnabled = ["fountain", "ballpoint", "pencil", "highlighter", "eraser"].includes(tool);
 
   if (view === "home") {
-    const displayedNotebooks = searchResults ?? visibleNotebooks;
+    const displayedNotebooks = libraryNotebooks;
     const folderBeingEdited = workspace.folders.find((folder) => folder.id === folderEditorId) ?? null;
     const folderColors = ["#5aa9e6", "#6d9eeb", "#8b7cf6", "#d16ba5", "#ef6f6c", "#f4a261", "#f6c453", "#58b09c", "#39a9a3", "#64748b"];
     const folderSymbols = ["📁", "🎓", "📚", "∑", "🧪", "✦", "🎨", "💡", "⚙", "🏠", "⭐", "🗂️"];
@@ -641,7 +665,7 @@ export default function Home() {
       <main className="libraryShell libraryShellNoSidebar">
         <section className="libraryMain">
           <header className="libraryTopbar libraryTopbarFull">
-            <button className="libraryWordmark" onClick={() => { setCurrentFolderId(null); setQuery(""); }} aria-label="Go to Documents">
+            <button className="libraryWordmark" onClick={() => { setCurrentFolderId(null); setQuery(""); setLibraryMode("documents"); }} aria-label="Go to Documents">
               <span className="brandMark">∫</span>
               <span><strong>Integrate</strong><small>Documents</small></span>
             </button>
@@ -649,12 +673,13 @@ export default function Home() {
             <div className="librarySearch">⌕<input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search notebooks and notes" /></div>
 
             <nav className="libraryQuickNav" aria-label="Library views">
-              <button className={!query ? "active" : ""} onClick={() => { setCurrentFolderId(null); setQuery(""); }}>Documents</button>
-              <button onClick={() => setQuery("★")}>Favorites</button>
-              <button onClick={() => setQuery("")}>Recent</button>
+              <button className={!query && libraryMode === "documents" ? "active" : ""} onClick={() => { setCurrentFolderId(null); setQuery(""); setLibraryMode("documents"); }}>Documents</button>
+              <button className={!query && libraryMode === "favorites" ? "active" : ""} onClick={() => { setCurrentFolderId(null); setQuery(""); setLibraryMode("favorites"); }}>Favorites</button>
+              <button className={!query && libraryMode === "recent" ? "active" : ""} onClick={() => { setCurrentFolderId(null); setQuery(""); setLibraryMode("recent"); }}>Recent</button>
             </nav>
 
             <div className="libraryTopActions">
+              <button className="libraryIconButton layoutQuickButton" onClick={() => setLibraryLayout((value) => value === "grid" ? "list" : "grid")} title={libraryLayout === "grid" ? "Switch to list view" : "Switch to grid view"} aria-label="Change library layout">{libraryLayout === "grid" ? "☷" : "▦"}</button>
               <button className="libraryIconButton themeQuickButton" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} title="Switch appearance">{theme === "dark" ? "☀" : "☾"}</button>
               <button className="primary newLibraryButton" onClick={createNotebook}>＋ New notebook</button>
               <button className="libraryIconButton newFolderButton" onClick={createFolder} title="New folder">
@@ -667,7 +692,7 @@ export default function Home() {
             <div className="libraryHeadingRow">
               <div>
                 <div className="breadcrumbs">
-                  <button onClick={() => setCurrentFolderId(null)}>Documents</button>
+                  <button onClick={() => { setCurrentFolderId(null); setLibraryMode("documents"); }}>Documents</button>
                   {breadcrumbs.map((folder) => <span key={folder.id}>› <button onClick={() => setCurrentFolderId(folder.id)}>{folder.name}</button></span>)}
                 </div>
                 <h1>{currentFolder?.name || "Documents"}</h1>
@@ -680,7 +705,7 @@ export default function Home() {
               )}
             </div>
 
-            {!searchResults && visibleFolders.length > 0 && (
+            {!searchResults && libraryMode === "documents" && visibleFolders.length > 0 && (
               <>
                 <div className="sectionHeadingWithHint"><h2 className="sectionTitle">Folders</h2><span>Folders can contain folders and notebooks</span></div>
                 <div className="documentGrid folderGrid">
@@ -705,25 +730,33 @@ export default function Home() {
             )}
 
             <div className="sectionHeadingWithHint">
-              <h2 className="sectionTitle">{searchResults ? "Search results" : currentFolder ? "Notebooks" : "Recent notebooks"}</h2>
-              {!searchResults && <span>{currentFolder ? "Notebooks in this folder" : "Recently edited"}</span>}
+              <h2 className="sectionTitle">{searchResults ? "Search results" : libraryMode === "favorites" ? "Favorites" : libraryMode === "recent" ? "Recent" : currentFolder ? "Notebooks" : "Notebooks"}</h2>
+              {!searchResults && <span>{libraryMode === "favorites" ? "Your starred notebooks" : libraryMode === "recent" ? "Recently edited" : currentFolder ? "Notebooks in this folder" : "Your notebooks"}</span>}
             </div>
-            <div className="documentGrid notebookGrid">
-              {(searchResults ?? (currentFolder ? displayedNotebooks : recentNotebooks)).map((notebook) => (
-                <button className="notebookTile notebookTileCard" key={notebook.id} onClick={() => openNotebook(notebook)}>
-                  <div className="notebookCover" style={{ "--notebook-color": notebook.color || "#5aa9e6" } as React.CSSProperties}>
-                    <span className="notebookSpine" />
-                    <span className="notebookPageEdge" />
-                    <span className="coverEmoji">{notebook.emoji}</span>
-                    <span className="coverLabel">INTEGRATE</span>
-                    <span className="coverLines" />
-                  </div>
-                  <strong>{notebook.title}</strong>
-                  <small><span className="typePill">Notebook</span>{notebook.pages.length} pages · {new Date(notebook.updatedAt || Date.now()).toLocaleDateString()}</small>
-                </button>
+            <div className={`documentGrid notebookGrid ${libraryLayout === "list" ? "notebookList" : ""}`}>
+              {displayedNotebooks.map((notebook) => (
+                <div className="notebookTileWrap" key={notebook.id}>
+                  <button className="notebookTile notebookTileCard" onClick={() => openNotebook(notebook)}>
+                    <div className="notebookCover" style={{ "--notebook-color": notebook.color || "#5aa9e6" } as React.CSSProperties}>
+                      <span className="notebookSpine" />
+                      <span className="notebookPageEdge" />
+                      <span className="coverEmoji">{notebook.emoji}</span>
+                      <span className="coverLabel">INTEGRATE</span>
+                      <span className="coverLines" />
+                    </div>
+                    <span className="notebookMeta">
+                      <strong>{notebook.title}</strong>
+                      <small><span className="typePill">Notebook</span>{notebook.pages.length} pages · {new Date(notebook.updatedAt || Date.now()).toLocaleDateString()}</small>
+                    </span>
+                  </button>
+                  <button className={`notebookFavoriteButton ${notebook.favorite ? "active" : ""}`} onClick={(event) => { event.stopPropagation(); toggleNotebookFavorite(notebook.id); }} aria-label={notebook.favorite ? `Remove ${notebook.title} from favorites` : `Add ${notebook.title} to favorites`} title={notebook.favorite ? "Remove from favorites" : "Add to favorites"}>{notebook.favorite ? "★" : "☆"}</button>
+                </div>
               ))}
-              {!searchResults && currentFolder && visibleNotebooks.length === 0 && (
+              {!searchResults && libraryMode === "documents" && currentFolder && visibleNotebooks.length === 0 && (
                 <button className="emptyCreateTile" onClick={createNotebook}>＋<strong>Create notebook</strong><small>Inside {currentFolder.name}</small></button>
+              )}
+              {!searchResults && libraryMode === "favorites" && displayedNotebooks.length === 0 && (
+                <div className="libraryEmptyState"><span>☆</span><strong>No favorites yet</strong><small>Star a notebook to keep it one tap away.</small></div>
               )}
             </div>
           </div>
@@ -784,6 +817,7 @@ export default function Home() {
             <button className="addTab" onClick={createPage}>＋</button>
           </div>
           <div className="editorHeaderActions">
+            <button className={selectedNotebook?.favorite ? "headerAction favorite active" : "headerAction favorite"} onClick={() => selectedNotebook && toggleNotebookFavorite(selectedNotebook.id)} aria-label={selectedNotebook?.favorite ? "Remove notebook from favorites" : "Add notebook to favorites"} title="Favorite notebook">{selectedNotebook?.favorite ? "★" : "☆"}</button>
             <div className="pageCounter">{(selectedNotebook?.pages.findIndex((page) => page.id === selectedPage?.id) ?? 0) + 1}<span>/</span>{selectedNotebook?.pages.length ?? 1}</div>
             <button className={detailsOpen ? "headerAction active" : "headerAction"} onClick={() => setDetailsOpen((value) => !value)} aria-label="Page details" title="Page details">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 10v6M12 7.5h.01"/></svg>
