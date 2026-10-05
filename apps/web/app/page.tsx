@@ -283,6 +283,7 @@ export default function Home() {
   const [recordingElapsed, setRecordingElapsed] = useState(0);
   const [playbackTime, setPlaybackTime] = useState<number | null>(null);
   const [mathOpen, setMathOpen] = useState(false);
+  const [shapeKind, setShapeKind] = useState<"line" | "rectangle" | "ellipse" | "arrow">("line");
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const workspaceImportRef = useRef<HTMLInputElement | null>(null);
@@ -943,8 +944,9 @@ export default function Home() {
   const drawingTool =
     tool === "highlighter" ? "highlighter" :
     tool === "eraser" ? "eraser" :
+    tool === "shapes" ? "shape" :
     "pen";
-  const drawingEnabled = ["fountain", "ballpoint", "pencil", "highlighter", "eraser"].includes(tool);
+  const drawingEnabled = ["fountain", "ballpoint", "pencil", "highlighter", "eraser", "shapes"].includes(tool);
 
   if (view === "home") {
     const displayedNotebooks = libraryNotebooks;
@@ -1337,7 +1339,10 @@ export default function Home() {
 
                 {tool === "shapes" && (
                   <div className="nestedChoices shapeChoices">
-                    <button className="shapeChoice" title="Line">╱</button><button className="shapeChoice" title="Rectangle">□</button><button className="shapeChoice" title="Circle">○</button><button className="shapeChoice" title="Arrow">→</button>
+                    <button className={shapeKind === "line" ? "shapeChoice active" : "shapeChoice"} onClick={() => setShapeKind("line")} title="Line">╱</button>
+                    <button className={shapeKind === "rectangle" ? "shapeChoice active" : "shapeChoice"} onClick={() => setShapeKind("rectangle")} title="Rectangle">□</button>
+                    <button className={shapeKind === "ellipse" ? "shapeChoice active" : "shapeChoice"} onClick={() => setShapeKind("ellipse")} title="Ellipse">○</button>
+                    <button className={shapeKind === "arrow" ? "shapeChoice active" : "shapeChoice"} onClick={() => setShapeKind("arrow")} title="Arrow">→</button>
                   </div>
                 )}
 
@@ -1414,6 +1419,7 @@ export default function Home() {
                     tipFlatness={penSettings.tipFlatness}
                     stabilization={penSettings.stabilization}
                     playbackTime={playbackTime}
+                    shapeKind={shapeKind}
                   />
                 </div>
                 {selectedPage.attachments.some((attachment) => attachment.type === "audio") && (
