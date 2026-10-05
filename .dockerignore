@@ -1,0 +1,11 @@
+node_modules
+**/node_modules
+.next
+**/.next
+.git
+.github
+.env
+.env.*
+!apps/web/.env.example
+*.log
+.DS_Store
