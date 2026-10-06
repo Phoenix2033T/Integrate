@@ -414,11 +414,9 @@ export default function Home() {
   }, [penSettings, lastPenStyle, hydrated]);
 
   useEffect(() => {
-    setInkColor((current) => {
-      if (theme === "dark" && current === "#1f2937") return "#eaf6ff";
-      if (theme === "light" && current === "#eaf6ff") return "#1f2937";
-      return current;
-    });
+    // The writing page is intentionally paper-light in both app appearances.
+    // Migrate the old dark-theme default white ink so existing users do not write invisibly.
+    setInkColor((current) => current === "#eaf6ff" ? "#1f2937" : current);
   }, [theme]);
 
   useEffect(() => {
