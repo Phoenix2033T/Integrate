@@ -1041,29 +1041,27 @@ export default function Home() {
               <span><strong>Integrate</strong><small>Documents</small></span>
             </button>
 
-            <div className="librarySearch">⌕<input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search notebooks and notes" /></div>
+            <div className="librarySearch"><AppIcon name="search" size={18} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search notebooks and notes" /></div>
 
             <nav className="libraryQuickNav" aria-label="Library views">
-              <button className={!query && libraryMode === "documents" ? "active" : ""} onClick={() => { setCurrentFolderId(null); setQuery(""); setLibraryMode("documents"); }}>Documents</button>
-              <button className={!query && libraryMode === "favorites" ? "active" : ""} onClick={() => { setCurrentFolderId(null); setQuery(""); setLibraryMode("favorites"); }}>Favorites</button>
-              <button className={!query && libraryMode === "recent" ? "active" : ""} onClick={() => { setCurrentFolderId(null); setQuery(""); setLibraryMode("recent"); }}>Recent</button>
-              <button className={!query && libraryMode === "trash" ? "active" : ""} onClick={() => { setCurrentFolderId(null); setQuery(""); setLibraryMode("trash"); }}>Trash</button>
+              <button className={!query && libraryMode === "documents" ? "active" : ""} onClick={() => { setCurrentFolderId(null); setQuery(""); setLibraryMode("documents"); }}><AppIcon name="documents" /><span>Documents</span></button>
+              <button className={!query && libraryMode === "favorites" ? "active" : ""} onClick={() => { setCurrentFolderId(null); setQuery(""); setLibraryMode("favorites"); }}><AppIcon name="favorite" /><span>Favorites</span></button>
+              <button className={!query && libraryMode === "recent" ? "active" : ""} onClick={() => { setCurrentFolderId(null); setQuery(""); setLibraryMode("recent"); }}><AppIcon name="recent" /><span>Recent</span></button>
+              <button className={!query && libraryMode === "trash" ? "active" : ""} onClick={() => { setCurrentFolderId(null); setQuery(""); setLibraryMode("trash"); }}><AppIcon name="trash" /><span>Trash</span></button>
             </nav>
 
             <div className="libraryTopActions">
               <select className="librarySortSelect" value={librarySort} onChange={(event) => setLibrarySort(event.target.value as LibrarySort)} aria-label="Sort notebooks">
                 <option value="updated">Last edited</option><option value="title">Title</option><option value="created">Created</option>
               </select>
-              <button className="libraryIconButton" onClick={exportWorkspaceBackup} title="Download backup" aria-label="Download backup">⇩</button>
-              <button className="libraryIconButton" onClick={() => workspaceImportRef.current?.click()} title="Import backup" aria-label="Import backup">⇧</button>
+              <button className="libraryIconButton" onClick={exportWorkspaceBackup} title="Download backup" aria-label="Download backup"><AppIcon name="download" /></button>
+              <button className="libraryIconButton" onClick={() => workspaceImportRef.current?.click()} title="Import backup" aria-label="Import backup"><AppIcon name="upload" /></button>
               <input ref={workspaceImportRef} className="hiddenInput" type="file" accept="application/json,.json" onChange={(event) => void importWorkspaceBackup(event.target.files?.[0] || null)} />
-              <button className="libraryIconButton layoutQuickButton" onClick={() => setLibraryLayout((value) => value === "grid" ? "list" : "grid")} title={libraryLayout === "grid" ? "Switch to list view" : "Switch to grid view"} aria-label="Change library layout">{libraryLayout === "grid" ? "☷" : "▦"}</button>
-              <button className="libraryIconButton themeQuickButton" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} title="Switch appearance">{theme === "dark" ? "☀" : "☾"}</button>
-              <a className="libraryIconButton legalQuickLink" href="/privacy" title="Privacy" aria-label="Privacy">i</a>
-              <button className="primary newLibraryButton" onClick={createNotebook}>＋ New notebook</button>
-              <button className="libraryIconButton newFolderButton" onClick={createFolder} title="New folder">
-                <span className="miniFolderIcon" />＋
-              </button>
+              <button className="libraryIconButton layoutQuickButton" onClick={() => setLibraryLayout((value) => value === "grid" ? "list" : "grid")} title={libraryLayout === "grid" ? "Switch to list view" : "Switch to grid view"} aria-label="Change library layout"><AppIcon name={libraryLayout === "grid" ? "list" : "grid"} /></button>
+              <button className="libraryIconButton themeQuickButton" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} title="Switch appearance"><AppIcon name={theme === "dark" ? "sun" : "moon"} /></button>
+              <a className="libraryIconButton legalQuickLink" href="/privacy" title="Privacy" aria-label="Privacy"><AppIcon name="info" /></a>
+              <button className="primary newLibraryButton" onClick={createNotebook}><AppIcon name="plus" size={18} /> New notebook</button>
+              <button className="libraryIconButton newFolderButton" onClick={createFolder} title="New folder" aria-label="New folder"><AppIcon name="folderPlus" /></button>
             </div>
           </header>
 
@@ -1095,7 +1093,7 @@ export default function Home() {
                       <div className="folderTile folderTileCard" key={folder.id}>
                         <button className="folderOpenButton" onClick={() => setCurrentFolderId(folder.id)} aria-label={`Open ${folder.name}`}>
                           <div className="folderVisual" style={{ "--folder-color": folder.color } as React.CSSProperties}>
-                            <span className="folderSymbol">{folder.symbol || "📁"}</span>
+                            <span className="folderSymbol"><FolderGlyph symbol={folder.symbol} /></span>
                           </div>
                           <strong>{folder.name}</strong>
                           <small>{childCount} {childCount === 1 ? "folder" : "folders"} · {notebookCount} {notebookCount === 1 ? "notebook" : "notebooks"}</small>
@@ -1119,7 +1117,7 @@ export default function Home() {
                     <div className="notebookCover" style={{ "--notebook-color": notebook.color || "#5aa9e6" } as React.CSSProperties}>
                       <span className="notebookSpine" />
                       <span className="notebookPageEdge" />
-                      <span className="coverEmoji">{notebook.emoji}</span>
+                      <span className="coverEmoji"><NotebookGlyph symbol={notebook.emoji} /></span>
                       <span className="coverLabel">INTEGRATE</span>
                       <span className="coverLines" />
                     </div>
@@ -1132,8 +1130,8 @@ export default function Home() {
                     <div className="notebookRecoveryActions"><button onClick={() => restoreNotebook(notebook.id)}>Restore</button><button className="dangerText" onClick={() => removeNotebookForever(notebook.id)}>Delete</button></div>
                   ) : (
                     <>
-                      <button className={`notebookFavoriteButton ${notebook.favorite ? "active" : ""}`} onClick={(event) => { event.stopPropagation(); toggleNotebookFavorite(notebook.id); }} aria-label={notebook.favorite ? `Remove ${notebook.title} from favorites` : `Add ${notebook.title} to favorites`} title={notebook.favorite ? "Remove from favorites" : "Add to favorites"}>{notebook.favorite ? "★" : "☆"}</button>
-                      <button className="notebookMoreButton" onClick={(event) => { event.stopPropagation(); setNotebookEditorId(notebook.id); }} aria-label={`Customize ${notebook.title}`} title="Notebook options">•••</button>
+                      <button className={`notebookFavoriteButton ${notebook.favorite ? "active" : ""}`} onClick={(event) => { event.stopPropagation(); toggleNotebookFavorite(notebook.id); }} aria-label={notebook.favorite ? `Remove ${notebook.title} from favorites` : `Add ${notebook.title} to favorites`} title={notebook.favorite ? "Remove from favorites" : "Add to favorites"}><AppIcon name="favorite" size={18} /></button>
+                      <button className="notebookMoreButton" onClick={(event) => { event.stopPropagation(); setNotebookEditorId(notebook.id); }} aria-label={`Customize ${notebook.title}`} title="Notebook options"><AppIcon name="more" size={19} /></button>
                     </>
                   )}
                 </div>
