@@ -278,6 +278,15 @@ function AppIcon({ name, size = 20 }: { name: AppIconName; size?: number }) {
   return <svg {...common}>{paths[name]}</svg>;
 }
 
+function BrandGlyph({ size = 27 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M21.8 3.7c-5.2 0-8.1 2.8-8.7 8.2l-.9 8.1c-.4 3.5-1.7 5.2-4.3 5.2-1.1 0-2.1-.3-3-.8 1.3 2.5 3.5 3.9 6.4 3.9 5.1 0 8-2.8 8.6-8.3l.9-8c.4-3.5 1.7-5.2 4.4-5.2 1 0 2 .2 2.9.7-1.3-2.4-3.4-3.8-6.3-3.8Z" fill="currentColor"/>
+      <path d="M13.8 12.2h8.7" stroke="rgba(255,255,255,.72)" strokeWidth="1.35" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
 function FolderGlyph({ symbol }: { symbol?: string }) {
   const name: AppIconName = symbol === "🎓" ? "school" : symbol === "∑" || symbol === "🧪" ? "stem" : "folder";
   return <AppIcon name={name} size={27} />;
@@ -1037,7 +1046,7 @@ export default function Home() {
         <section className="libraryMain">
           <header className="libraryTopbar libraryTopbarFull">
             <button className="libraryWordmark" onClick={() => { setCurrentFolderId(null); setQuery(""); setLibraryMode("documents"); }} aria-label="Go to Documents">
-              <span className="brandMark">∫</span>
+              <span className="brandMark"><BrandGlyph /></span>
               <span><strong>Integrate</strong><small>Documents</small></span>
             </button>
 
