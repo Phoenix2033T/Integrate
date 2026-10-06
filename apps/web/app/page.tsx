@@ -234,6 +234,60 @@ function ToolIcon({ name }: { name: IconName }) {
   return <svg {...common}>{paths[name]}</svg>;
 }
 
+
+type AppIconName =
+  | "search" | "documents" | "favorite" | "recent" | "trash" | "download" | "upload"
+  | "grid" | "list" | "sun" | "moon" | "info" | "folderPlus" | "plus" | "back"
+  | "pages" | "export" | "share" | "more" | "details" | "folder" | "notebook"
+  | "school" | "stem" | "settings";
+
+function AppIcon({ name, size = 20 }: { name: AppIconName; size?: number }) {
+  const common = {
+    width: size, height: size, viewBox: "0 0 24 24", fill: "none",
+    stroke: "currentColor", strokeWidth: 1.75,
+    strokeLinecap: "round" as const, strokeLinejoin: "round" as const,
+    "aria-hidden": true
+  };
+  const paths: Record<AppIconName, React.ReactNode> = {
+    search: <><circle cx="10.8" cy="10.8" r="5.8"/><path d="m15.2 15.2 4.3 4.3"/></>,
+    documents: <><rect x="5" y="4" width="14" height="16" rx="3"/><path d="M8.5 8h7M8.5 11.5h7M8.5 15h4.5"/></>,
+    favorite: <path d="m12 3 2.6 5.25 5.8.84-4.2 4.08.99 5.76L12 16.2l-5.19 2.73.99-5.76-4.2-4.08 5.8-.84L12 3Z"/>,
+    recent: <><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></>,
+    trash: <><path d="M5 7h14M9 7V4.8h6V7M7.2 7l.7 12h8.2l.7-12"/><path d="M10 10.5v5M14 10.5v5"/></>,
+    download: <><path d="M12 4v10"/><path d="m8.5 10.5 3.5 3.5 3.5-3.5"/><path d="M5 19h14"/></>,
+    upload: <><path d="M12 15V5"/><path d="m8.5 8.5 3.5-3.5 3.5 3.5"/><path d="M5 19h14"/></>,
+    grid: <><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></>,
+    list: <><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="5" cy="6" r=".8" fill="currentColor" stroke="none"/><circle cx="5" cy="12" r=".8" fill="currentColor" stroke="none"/><circle cx="5" cy="18" r=".8" fill="currentColor" stroke="none"/></>,
+    sun: <><circle cx="12" cy="12" r="3.5"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4"/></>,
+    moon: <path d="M19.2 15.5A7.7 7.7 0 0 1 8.5 4.8 8.2 8.2 0 1 0 19.2 15.5Z"/>,
+    info: <><circle cx="12" cy="12" r="8"/><path d="M12 10.5V16M12 7.5h.01"/></>,
+    folderPlus: <><path d="M3.5 7.5h6l1.8 2H20a1.5 1.5 0 0 1 1.5 1.5v7A1.5 1.5 0 0 1 20 19.5H4A1.5 1.5 0 0 1 2.5 18V9A1.5 1.5 0 0 1 4 7.5Z"/><path d="M15.5 12v5M13 14.5h5"/></>,
+    plus: <path d="M12 5v14M5 12h14"/>,
+    back: <path d="m14.5 5.5-6.5 6.5 6.5 6.5"/>,
+    pages: <><rect x="6" y="5" width="12" height="14" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></>,
+    export: <><path d="M12 15V4"/><path d="m8.5 7.5 3.5-3.5 3.5 3.5"/><path d="M5 11v8h14v-8"/></>,
+    share: <><path d="M12 15V4"/><path d="m8.5 7.5 3.5-3.5 3.5 3.5"/><path d="M5 12v7h14v-7"/></>,
+    more: <><circle cx="5.5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1" fill="currentColor" stroke="none"/></>,
+    details: <><circle cx="12" cy="12" r="8"/><path d="M12 10.5V16M12 7.5h.01"/></>,
+    folder: <><path d="M3.5 8h6l1.8 2H20a1.5 1.5 0 0 1 1.5 1.5V18A1.5 1.5 0 0 1 20 19.5H4A1.5 1.5 0 0 1 2.5 18V9.5A1.5 1.5 0 0 1 4 8Z"/><path d="M4 8V6.5A1.5 1.5 0 0 1 5.5 5h4l2 2H18"/></>,
+    notebook: <><rect x="5.5" y="3.5" width="13" height="17" rx="2.5"/><path d="M8.5 3.5v17M11.5 8h4M11.5 11h4"/></>,
+    school: <><path d="m3 9 9-5 9 5-9 5-9-5Z"/><path d="M6.5 11.2V16c3.2 2.4 7.8 2.4 11 0v-4.8M21 9v5"/></>,
+    stem: <><path d="M9 3h6M10 3v5l-5.2 9a2 2 0 0 0 1.7 3h11a2 2 0 0 0 1.7-3L14 8V3"/><path d="M7.5 15h9"/></>,
+    settings: <><circle cx="12" cy="12" r="3"/><path d="M19 13.5v-3l-2-.7a7 7 0 0 0-.7-1.7l.9-1.9-2.1-2.1-1.9.9a7 7 0 0 0-1.7-.7L10.8 2h-3l-.7 2.3a7 7 0 0 0-1.7.7l-1.9-.9-2.1 2.1.9 1.9a7 7 0 0 0-.7 1.7l-2 .7v3l2 .7c.2.6.4 1.2.7 1.7l-.9 1.9 2.1 2.1 1.9-.9c.5.3 1.1.5 1.7.7l.7 2.3h3l.7-2.3c.6-.2 1.2-.4 1.7-.7l1.9.9 2.1-2.1-.9-1.9c.3-.5.5-1.1.7-1.7l2-.7Z" transform="translate(2.2 0) scale(.82)"/></>
+  };
+  return <svg {...common}>{paths[name]}</svg>;
+}
+
+function FolderGlyph({ symbol }: { symbol?: string }) {
+  const name: AppIconName = symbol === "🎓" ? "school" : symbol === "∑" || symbol === "🧪" ? "stem" : "folder";
+  return <AppIcon name={name} size={27} />;
+}
+
+function NotebookGlyph({ symbol }: { symbol?: string }) {
+  const name: AppIconName = symbol === "∫" || symbol === "∑" || symbol === "🧪" ? "stem" : symbol === "🎓" ? "school" : "notebook";
+  return <AppIcon name={name} size={27} />;
+}
+
 function toolGroup(tool: Tool) {
   if (["fountain", "ballpoint", "pencil", "brush"].includes(tool)) return "pen";
   if (["image", "tape", "elements"].includes(tool)) return "insert";
