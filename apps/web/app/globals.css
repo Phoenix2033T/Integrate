@@ -3607,3 +3607,670 @@ textarea:focus-visible {
     transform: none !important;
   }
 }
+
+
+/* =========================================================
+   Integrate Premium v2 — mockup implementation
+   This intentionally overrides the earlier prototype chrome.
+   ========================================================= */
+:root {
+  --premium-canvas: #f4f8fd;
+  --premium-panel: rgba(255,255,255,.78);
+  --premium-panel-solid: #ffffff;
+  --premium-text: #10233d;
+  --premium-subtle: #68809a;
+  --premium-border: rgba(64,105,145,.13);
+  --premium-blue: #246fe8;
+  --premium-blue-soft: #e9f2ff;
+  --premium-shadow-lg: 0 24px 70px rgba(49,84,121,.14);
+  --premium-shadow-md: 0 12px 32px rgba(49,84,121,.11);
+}
+:root[data-theme="dark"] {
+  --premium-canvas: #081a27;
+  --premium-panel: rgba(12,35,51,.82);
+  --premium-panel-solid: #0d2638;
+  --premium-text: #eef8ff;
+  --premium-subtle: #8da9bc;
+  --premium-border: rgba(134,190,228,.12);
+  --premium-blue: #5eb9ff;
+  --premium-blue-soft: rgba(70,166,238,.14);
+  --premium-shadow-lg: 0 28px 76px rgba(0,0,0,.30);
+  --premium-shadow-md: 0 14px 36px rgba(0,0,0,.22);
+}
+
+/* Library becomes a two-level app shell like the approved mockup. */
+.libraryShellNoSidebar {
+  min-height: 100dvh;
+  background:
+    radial-gradient(900px 420px at 18% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 68%),
+    radial-gradient(760px 420px at 82% 5%, rgba(133,184,255,.10), transparent 68%),
+    var(--premium-canvas);
+}
+.libraryTopbarFull {
+  min-height: 154px;
+  height: auto;
+  padding: max(18px, env(safe-area-inset-top)) max(34px, env(safe-area-inset-right)) 16px max(34px, env(safe-area-inset-left));
+  display: grid;
+  grid-template-columns: minmax(210px, .8fr) minmax(330px, 1.45fr) auto;
+  grid-template-rows: 58px 62px;
+  grid-template-areas:
+    "brand search utility"
+    "nav nav utility";
+  align-items: center;
+  gap: 8px 22px;
+  background: color-mix(in srgb, var(--premium-panel) 90%, transparent);
+  border-bottom: 1px solid var(--premium-border);
+  box-shadow: 0 14px 40px rgba(49,84,121,.055);
+  backdrop-filter: blur(36px) saturate(1.35);
+  -webkit-backdrop-filter: blur(36px) saturate(1.35);
+}
+.libraryWordmark { grid-area: brand; width: max-content; }
+.libraryWordmark .brandMark {
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  color: white;
+  background:
+    radial-gradient(circle at 25% 12%, rgba(255,255,255,.48), transparent 27%),
+    linear-gradient(145deg, #7fd1ff 0%, #398ef2 48%, #6757e8 100%);
+  box-shadow: 0 12px 30px rgba(54,116,223,.24), inset 0 1px 0 rgba(255,255,255,.5);
+}
+.libraryWordmark strong {
+  color: var(--premium-text);
+  font-size: 20px;
+  font-weight: 790;
+  letter-spacing: -.045em;
+}
+.libraryWordmark small {
+  color: var(--premium-subtle);
+  font-size: 10px;
+  letter-spacing: .02em;
+}
+.librarySearch {
+  grid-area: search;
+  height: 46px;
+  max-width: 650px;
+  border-radius: 15px;
+  padding: 0 15px;
+  gap: 10px;
+  color: var(--premium-subtle);
+  border: 1px solid var(--premium-border);
+  background: color-mix(in srgb, var(--premium-panel-solid) 62%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+}
+.librarySearch svg { flex: 0 0 auto; }
+.librarySearch input {
+  font-size: 14px;
+  color: var(--premium-text);
+}
+.libraryQuickNav {
+  grid-area: nav;
+  width: max-content;
+  max-width: 100%;
+  height: 58px;
+  padding: 5px;
+  display: flex;
+  gap: 3px;
+  border: 1px solid var(--premium-border);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--premium-panel-solid) 58%, transparent);
+  box-shadow: 0 10px 28px rgba(49,84,121,.07), inset 0 1px 0 rgba(255,255,255,.12);
+}
+.libraryQuickNav button {
+  min-width: 92px;
+  height: 46px;
+  padding: 0 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 13px;
+  color: var(--premium-subtle);
+  font-size: 11px;
+  font-weight: 680;
+}
+.libraryQuickNav button svg { width: 18px; height: 18px; }
+.libraryQuickNav button.active {
+  color: var(--premium-blue);
+  background: var(--premium-panel-solid);
+  box-shadow: 0 6px 18px rgba(43,91,140,.11), inset 0 0 0 1px color-mix(in srgb, var(--premium-blue) 13%, transparent);
+}
+.libraryTopActions {
+  grid-area: utility;
+  align-self: stretch;
+  justify-self: end;
+  display: grid;
+  grid-template-columns: repeat(4, 42px) minmax(142px, auto) 42px;
+  grid-auto-rows: 42px;
+  align-content: center;
+  gap: 8px;
+  max-width: 430px;
+}
+.libraryTopActions .librarySortSelect {
+  grid-column: 1 / 5;
+  width: 100%;
+  height: 38px;
+  border-radius: 12px;
+}
+.libraryTopActions .newLibraryButton {
+  grid-column: 5;
+  grid-row: 2;
+  height: 42px;
+  border-radius: 13px;
+  padding: 0 17px;
+}
+.libraryTopActions .newFolderButton { grid-column: 6; grid-row: 2; }
+.libraryTopActions > .libraryIconButton:not(.newFolderButton),
+.libraryTopActions > .legalQuickLink {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+}
+.libraryTopActions > button:nth-of-type(1) { grid-column: 1; grid-row: 2; }
+.libraryTopActions > button:nth-of-type(2) { grid-column: 2; grid-row: 2; }
+.libraryTopActions > button:nth-of-type(3) { grid-column: 3; grid-row: 2; }
+.libraryTopActions > button:nth-of-type(4) { grid-column: 4; grid-row: 2; }
+.libraryTopActions > a { grid-column: 4; grid-row: 1; justify-self: end; }
+.newLibraryButton svg { stroke-width: 2; }
+
+.libraryContentWide {
+  width: min(1460px, calc(100% - 72px));
+  margin: 0 auto;
+  padding: 42px 0 100px;
+}
+.libraryHeadingRow { margin-bottom: 36px; }
+.breadcrumbs { margin-bottom: 8px; }
+.libraryHeadingRow h1 {
+  color: var(--premium-text);
+  font-size: clamp(32px, 3.2vw, 48px);
+  line-height: .98;
+  font-weight: 780;
+  letter-spacing: -.055em;
+}
+.sectionHeadingWithHint { margin: 30px 0 15px; }
+.sectionTitle {
+  color: var(--premium-text);
+  font-size: 18px;
+  font-weight: 760;
+}
+.sectionHeadingWithHint > span { color: var(--premium-subtle); }
+
+.folderGrid {
+  grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+  gap: 25px;
+}
+.folderTileCard { max-width: 250px; }
+.folderVisual {
+  height: 126px;
+  border-radius: 20px;
+  border: 0;
+  background:
+    radial-gradient(circle at 78% 18%, rgba(255,255,255,.38), transparent 28%),
+    linear-gradient(150deg, color-mix(in srgb, var(--folder-color) 72%, white 28%), var(--folder-color) 70%, color-mix(in srgb, var(--folder-color) 88%, black 12%));
+  box-shadow: 0 16px 30px color-mix(in srgb, var(--folder-color) 18%, transparent), 0 4px 12px rgba(33,63,91,.08), inset 0 1px 0 rgba(255,255,255,.46);
+}
+.folderVisual::before {
+  left: 0;
+  top: -15px;
+  width: 45%;
+  height: 31px;
+  border-radius: 14px 15px 0 0;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--folder-color) 75%, white 25%), var(--folder-color));
+}
+.folderVisual::after {
+  inset: 10px 8px 8px;
+  border-radius: 14px;
+  background: linear-gradient(160deg, rgba(255,255,255,.12), transparent 48%);
+  border-color: rgba(255,255,255,.15);
+}
+.folderSymbol {
+  z-index: 2;
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
+  color: rgba(20,63,105,.76);
+  background: rgba(255,255,255,.30);
+  border: 1px solid rgba(255,255,255,.42);
+  box-shadow: 0 8px 20px rgba(24,61,92,.09), inset 0 1px 0 rgba(255,255,255,.55);
+}
+:root[data-theme="dark"] .folderSymbol { color: rgba(238,248,255,.88); background: rgba(255,255,255,.12); }
+.folderOpenButton strong { margin-top: 13px; color: var(--premium-text); font-size: 13px; }
+.folderOpenButton small { margin-top: 4px; color: var(--premium-subtle); font-size: 9px; }
+.itemMoreButton {
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 30px;
+  border-radius: 11px;
+  background: rgba(255,255,255,.40);
+  color: rgba(20,63,105,.72);
+  border: 1px solid rgba(255,255,255,.34);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.notebookGrid {
+  grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+  gap: 30px 28px;
+}
+.notebookTileWrap { max-width: 215px; }
+.notebookCover {
+  height: 230px;
+  border-radius: 15px 18px 18px 15px;
+  background:
+    radial-gradient(circle at 78% 12%, rgba(255,255,255,.30), transparent 23%),
+    repeating-linear-gradient(93deg, rgba(255,255,255,.026) 0 1px, rgba(0,0,0,.014) 1px 3px),
+    linear-gradient(145deg, color-mix(in srgb, var(--notebook-color) 76%, white 24%), var(--notebook-color) 57%, color-mix(in srgb, var(--notebook-color) 88%, black 12%));
+  box-shadow: 10px 17px 34px rgba(29,56,82,.16), 2px 4px 8px rgba(29,56,82,.09), inset 0 1px 0 rgba(255,255,255,.34);
+}
+.notebookSpine { width: 13px; background: linear-gradient(90deg, rgba(0,0,0,.18), rgba(255,255,255,.10), rgba(0,0,0,.04)); }
+.notebookPageEdge {
+  width: 7px;
+  right: 2px;
+  top: 10px;
+  bottom: 10px;
+  border-radius: 0 10px 10px 0;
+  background: repeating-linear-gradient(to bottom, rgba(255,255,255,.75) 0 2px, rgba(198,218,232,.65) 2px 3px);
+  opacity: .72;
+}
+.coverEmoji {
+  top: 64px;
+  width: 52px;
+  height: 52px;
+  color: rgba(255,255,255,.90);
+  background: rgba(255,255,255,.13);
+  border-color: rgba(255,255,255,.20);
+}
+.coverLabel { top: 22px; font-size: 7px; letter-spacing: .24em; opacity: .68; }
+.coverLines {
+  left: 32px;
+  right: 25px;
+  bottom: 27px;
+  height: 28px;
+  border-radius: 7px;
+  background: rgba(255,255,255,.22);
+  border: 1px solid rgba(255,255,255,.15);
+}
+.notebookMeta { margin-top: 12px; }
+.notebookMeta strong { color: var(--premium-text); font-size: 13px; }
+.notebookMeta small { color: var(--premium-subtle); font-size: 9px; }
+.notebookFavoriteButton,
+.notebookMoreButton {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  color: rgba(240,248,255,.92);
+  background: rgba(20,53,78,.55);
+  border: 1px solid rgba(255,255,255,.14);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 7px 18px rgba(14,40,60,.14);
+}
+.notebookFavoriteButton.active { color: #ffd66b; }
+
+/* Notebook header is now two-tiered; tools float like a native iPad palette. */
+.notebookWorkspace {
+  background:
+    radial-gradient(900px 480px at 50% -120px, color-mix(in srgb, var(--accent) 8%, transparent), transparent 70%),
+    var(--premium-canvas);
+}
+.editorHeader {
+  height: 104px;
+  padding: max(9px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) 38px max(18px, env(safe-area-inset-left));
+  display: grid;
+  grid-template-columns: 38px 38px minmax(170px, 1fr) auto;
+  grid-template-areas: "back pages title actions";
+  gap: 8px;
+  align-items: center;
+  background: color-mix(in srgb, var(--premium-panel) 93%, transparent) !important;
+  border-bottom: 1px solid var(--premium-border);
+  box-shadow: 0 12px 38px rgba(45,78,108,.07) !important;
+  backdrop-filter: blur(34px) saturate(1.35);
+  -webkit-backdrop-filter: blur(34px) saturate(1.35);
+}
+.backButton { grid-area: back; }
+.pageNavToggle { grid-area: pages; }
+.notebookTitleBlock {
+  grid-area: title;
+  justify-self: start;
+  width: min(330px, 100%);
+}
+.notebookTitleBlock input {
+  color: var(--premium-text) !important;
+  font-size: 15px !important;
+  font-weight: 760 !important;
+  letter-spacing: -.02em;
+}
+.notebookTitleBlock span { color: var(--premium-subtle) !important; }
+.editorHeaderActions { grid-area: actions; }
+.editorHeader .backButton,
+.editorHeader .headerAction,
+.editorHeaderActions button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--premium-border);
+  border-radius: 12px;
+  color: var(--premium-subtle);
+  background: color-mix(in srgb, var(--premium-panel-solid) 58%, transparent);
+}
+.editorHeader .backButton:hover,
+.editorHeader .headerAction:hover,
+.editorHeaderActions button:hover {
+  color: var(--premium-blue);
+  background: var(--premium-panel-solid);
+  border-color: color-mix(in srgb, var(--premium-blue) 20%, var(--premium-border));
+}
+.pageTabs {
+  position: absolute;
+  left: max(94px, env(safe-area-inset-left));
+  right: max(96px, env(safe-area-inset-right));
+  bottom: 0;
+  height: 37px;
+  display: flex;
+  justify-content: flex-start;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.pageTabs::-webkit-scrollbar { display: none; }
+.pageTabs button {
+  flex: 0 0 auto;
+  min-width: 104px;
+  height: 34px;
+  padding: 0 13px;
+  border-radius: 11px 11px 0 0;
+  color: var(--premium-subtle);
+  font-size: 10px;
+  font-weight: 650;
+}
+.pageTabs button.active {
+  color: var(--premium-blue);
+  background: color-mix(in srgb, var(--premium-blue-soft) 72%, transparent);
+  box-shadow: inset 0 -2px 0 var(--premium-blue);
+}
+.pageTabs .addTab { min-width: 38px; width: 38px; }
+
+.floatingToolDock.nestedDock {
+  top: 104px;
+  height: 118px;
+  padding: 8px 18px 10px;
+  overflow: visible;
+  background: transparent !important;
+  border: 0;
+  box-shadow: none;
+  pointer-events: none;
+}
+.primaryToolRow,
+.contextToolRow {
+  pointer-events: auto;
+  width: max-content;
+  max-width: calc(100vw - 36px);
+  margin: 0 auto;
+  border: 1px solid var(--premium-border);
+  background: color-mix(in srgb, var(--premium-panel) 94%, transparent);
+  box-shadow: var(--premium-shadow-md), inset 0 1px 0 rgba(255,255,255,.18);
+  backdrop-filter: blur(30px) saturate(1.35);
+  -webkit-backdrop-filter: blur(30px) saturate(1.35);
+}
+.primaryToolRow {
+  min-height: 58px;
+  padding: 5px 7px;
+  border-radius: 18px;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.primaryToolRow::-webkit-scrollbar { display: none; }
+.modernTool {
+  min-width: 62px;
+  height: 48px;
+  padding: 4px 7px;
+  border-radius: 13px;
+  color: var(--premium-subtle);
+}
+.modernTool svg { width: 20px; height: 20px; }
+.modernTool span { font-size: 8px; font-weight: 650; }
+.modernTool.active {
+  color: #fff;
+  background: linear-gradient(145deg, #347ff0, #1f66dd);
+  box-shadow: 0 8px 20px rgba(34,105,221,.25), inset 0 1px 0 rgba(255,255,255,.28);
+}
+.primarySpacer { min-width: 10px; }
+.utilityTool {
+  width: 36px;
+  height: 36px;
+  margin: 6px 2px;
+  border-radius: 11px;
+  color: var(--premium-subtle);
+}
+.contextToolRow {
+  min-height: 42px;
+  margin-top: 7px;
+  padding: 4px 8px;
+  border-radius: 15px;
+  gap: 7px;
+}
+.contextIdentity { padding-left: 5px; }
+.contextIdentity strong { color: var(--premium-subtle); font-size: 9px; }
+.nestedChoice,
+.segmented,
+.shapeChoice,
+.paperNested {
+  border-radius: 10px;
+  color: var(--premium-subtle);
+  background: color-mix(in srgb, var(--premium-panel-solid) 48%, transparent);
+  border: 1px solid color-mix(in srgb, var(--premium-border) 80%, transparent);
+}
+.colorDot { width: 22px; height: 22px; box-shadow: 0 0 0 1px rgba(20,50,75,.10); }
+.colorDot.active { box-shadow: 0 0 0 2px var(--premium-panel-solid), 0 0 0 4px var(--premium-blue); }
+.widthDot { width: 30px; height: 30px; border-radius: 10px; }
+
+.focusCanvas {
+  top: 104px;
+  padding: 132px 120px 90px;
+  background:
+    radial-gradient(800px 450px at 50% 0, rgba(95,153,204,.09), transparent 70%),
+    color-mix(in srgb, var(--premium-canvas) 94%, #dce7f0 6%);
+}
+.focusCanvas .document {
+  width: min(860px, calc(100vw - 270px));
+  min-height: 1120px;
+  border-radius: 18px;
+  border: 1px solid rgba(116,139,158,.17);
+  box-shadow: 0 32px 78px rgba(32,58,82,.18), 0 5px 14px rgba(32,58,82,.08);
+  overflow: hidden;
+}
+/* Paper stays paper even when the surrounding app is dark. */
+:root[data-theme="dark"] .focusCanvas .document {
+  --paper: #fbfaf6;
+  --paper-line: #d9e3e8;
+  color: #17212b;
+}
+:root[data-theme="dark"] .focusCanvas .document .editor {
+  color: #17212b;
+}
+:root[data-theme="dark"] .focusCanvas .document .editor::placeholder {
+  color: #8798a6;
+}
+.pageNavigator {
+  left: auto;
+  right: max(18px, env(safe-area-inset-right));
+  top: 238px;
+  bottom: 22px;
+  width: 112px;
+  border: 1px solid var(--premium-border);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--premium-panel) 94%, transparent);
+  box-shadow: var(--premium-shadow-md);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+}
+.pageNavigatorHeader { padding: 11px 10px; }
+.pageNavigatorHeader strong { font-size: 10px; }
+.pageNavigatorList { padding: 8px; gap: 10px; }
+.pageNavigatorItem {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+.pageNavigatorOpen {
+  display: grid;
+  gap: 5px;
+}
+.pageNavigatorOpen > span:last-child { display: none; }
+.pageMiniPreview {
+  width: 82px;
+  height: 106px;
+  border-radius: 10px;
+  border: 1px solid rgba(88,118,145,.16);
+  box-shadow: 0 5px 14px rgba(35,65,90,.08);
+}
+.pageNavigatorItem.active .pageMiniPreview {
+  box-shadow: 0 0 0 2px var(--premium-blue), 0 7px 18px rgba(35,105,210,.14);
+}
+.pageNavigatorActions { display: none; }
+
+/* Pen settings now reads as a premium floating inspector. */
+.penSettingsPopover {
+  top: 72px;
+  left: 50%;
+  right: auto;
+  width: min(390px, calc(100vw - 36px));
+  transform: translateX(-50%);
+  border-radius: 22px;
+  border: 1px solid var(--premium-border);
+  background: color-mix(in srgb, var(--premium-panel-solid) 96%, transparent);
+  color: var(--premium-text);
+  box-shadow: var(--premium-shadow-lg);
+  backdrop-filter: blur(34px) saturate(1.25);
+  -webkit-backdrop-filter: blur(34px) saturate(1.25);
+}
+.penPopoverHeader {
+  background: color-mix(in srgb, var(--premium-panel-solid) 88%, transparent);
+  border-bottom-color: var(--premium-border);
+}
+.penPopoverHeader strong { color: var(--premium-text); font-size: 14px; }
+.penPopoverHeader button { color: var(--premium-subtle); background: color-mix(in srgb, var(--premium-blue-soft) 50%, transparent); }
+.penStyleChoices button,
+.penSliderGroup,
+.penPopoverSection {
+  color: var(--premium-text);
+  background: color-mix(in srgb, var(--premium-blue-soft) 26%, var(--premium-panel-solid) 74%);
+  border-color: var(--premium-border);
+}
+.penStyleChoices button { color: var(--premium-subtle); }
+.penStyleChoices button.active {
+  color: white;
+  background: linear-gradient(145deg, #347ff0, #1f66dd);
+  border-color: transparent;
+  box-shadow: 0 8px 20px rgba(34,105,221,.20);
+}
+.penSlider span,
+.penPopoverSection > strong { color: var(--premium-text); }
+.penSlider output,
+.penSettingsHint,
+.penPopoverSection > button > span:last-child { color: var(--premium-subtle); }
+.penPopoverSection > button { color: var(--premium-text); border-bottom-color: var(--premium-border); }
+
+/* Make the custom SVG language feel intentional everywhere. */
+.libraryIconButton svg,
+.headerAction svg,
+.backButton svg,
+.newFolderButton svg {
+  width: 19px;
+  height: 19px;
+}
+.libraryIconButton,
+.headerAction,
+.backButton,
+.modernTool,
+.utilityTool {
+  -webkit-tap-highlight-color: transparent;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--premium-blue) 34%, transparent);
+  outline-offset: 2px;
+}
+
+/* iPad landscape is the flagship composition. */
+@media (min-width: 900px) and (max-width: 1400px) {
+  .libraryTopbarFull {
+    grid-template-columns: 190px minmax(270px, 1fr) 390px;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .libraryContentWide { width: calc(100% - 56px); }
+  .notebookGrid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .focusCanvas { padding-left: 70px; padding-right: 130px; }
+  .focusCanvas .document { width: min(800px, calc(100vw - 210px)); }
+}
+@media (max-width: 980px) {
+  .libraryTopbarFull {
+    min-height: 190px;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: 52px 48px 58px;
+    grid-template-areas:
+      "brand utility"
+      "search search"
+      "nav nav";
+    gap: 7px 12px;
+  }
+  .libraryTopActions {
+    grid-area: utility;
+    display: flex;
+    align-items: center;
+    max-width: none;
+  }
+  .libraryTopActions .librarySortSelect,
+  .libraryTopActions > button:nth-of-type(1),
+  .libraryTopActions > button:nth-of-type(2),
+  .libraryTopActions > a {
+    display: none;
+  }
+  .libraryTopActions .newLibraryButton { display: inline-flex; }
+  .librarySearch { max-width: none; }
+  .libraryQuickNav { width: 100%; justify-content: space-between; }
+  .libraryQuickNav button { min-width: 0; flex: 1; }
+}
+@media (max-width: 700px) {
+  .libraryTopbarFull {
+    min-height: 180px;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  .libraryWordmark .brandMark { width: 42px; height: 42px; border-radius: 13px; }
+  .libraryWordmark strong { font-size: 17px; }
+  .libraryWordmark small { display: none; }
+  .libraryTopActions .layoutQuickButton,
+  .libraryTopActions .themeQuickButton { display: none; }
+  .newLibraryButton { padding: 0 12px; }
+  .libraryQuickNav button { padding: 0 7px; }
+  .libraryQuickNav button span { display: none; }
+  .libraryQuickNav button svg { width: 20px; height: 20px; }
+  .libraryContentWide { width: calc(100% - 28px); padding-top: 26px; }
+  .folderGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 14px; }
+  .folderTileCard { max-width: none; }
+  .folderVisual { height: 105px; }
+  .notebookGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 16px; }
+  .notebookTileWrap { max-width: none; }
+  .notebookCover { height: 210px; }
+  .editorHeader {
+    height: 100px;
+    padding-left: 10px;
+    padding-right: 10px;
+    grid-template-columns: 34px 34px minmax(100px, 1fr) auto;
+  }
+  .editorHeaderActions .headerAction:nth-child(-n+3),
+  .pageCounter { display: none; }
+  .pageTabs { left: 12px; right: 12px; }
+  .floatingToolDock.nestedDock { top: 100px; padding-left: 8px; padding-right: 8px; }
+  .primaryToolRow { max-width: calc(100vw - 16px); justify-content: flex-start; }
+  .modernTool { min-width: 56px; }
+  .focusCanvas { top: 100px; padding: 132px 10px 50px; }
+  .focusCanvas .document { width: min(100%, 760px); min-height: 980px; border-radius: 13px; }
+  .pageNavigator { top: 228px; right: 8px; width: 94px; }
+  .pageMiniPreview { width: 66px; height: 88px; }
+}
