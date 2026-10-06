@@ -1215,7 +1215,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="folderPreview">
-                <div className="folderVisual" style={{ "--folder-color": folderBeingEdited.color } as React.CSSProperties}><span className="folderSymbol">{folderBeingEdited.symbol || "📁"}</span></div>
+                <div className="folderVisual" style={{ "--folder-color": folderBeingEdited.color } as React.CSSProperties}><span className="folderSymbol"><FolderGlyph symbol={folderBeingEdited.symbol} /></span></div>
                 <div><strong>{folderBeingEdited.name}</strong><small>Folder</small></div>
               </div>
               <button className="primary folderDoneButton" onClick={() => setFolderEditorId(null)}>Done</button>
@@ -1230,8 +1230,8 @@ export default function Home() {
     <main className={`editorShell ${aiOpen ? "withAI" : ""}`}>
       <section className="notebookWorkspace">
         <header className="editorHeader">
-          <button className="backButton" onClick={() => setView("home")} aria-label="Back to library">‹</button>
-          <button className={pageNavigatorOpen ? "headerAction pageNavToggle active" : "headerAction pageNavToggle"} onClick={() => setPageNavigatorOpen((open) => !open)} aria-label="Show pages" title="Pages">☷</button>
+          <button className="backButton" onClick={() => setView("home")} aria-label="Back to library"><AppIcon name="back" /></button>
+          <button className={pageNavigatorOpen ? "headerAction pageNavToggle active" : "headerAction pageNavToggle"} onClick={() => setPageNavigatorOpen((open) => !open)} aria-label="Show pages" title="Pages"><AppIcon name="pages" /></button>
           <div className="notebookTitleBlock">
             <input value={selectedNotebook?.title || ""} onChange={(event) => patchNotebook({ title: event.target.value })} aria-label="Notebook title" />
             <span>{saveState === "saved" ? "Saved" : "Saving…"}</span>
@@ -1240,24 +1240,22 @@ export default function Home() {
             {selectedNotebook?.pages.slice(0, 7).map((page) => (
               <button key={page.id} className={page.id === selectedPage?.id ? "active" : ""} onClick={() => { setSelectedPageId(page.id); setRedoStrokes([]); }}>{page.title}</button>
             ))}
-            <button className="addTab" onClick={createPage}>＋</button>
+            <button className="addTab" onClick={createPage} aria-label="New page"><AppIcon name="plus" size={17} /></button>
           </div>
           <div className="editorHeaderActions">
-            <button className="headerAction" onClick={exportNotebookMarkdown} aria-label="Export notebook as Markdown" title="Export Markdown">⇩</button>
-            <button className="headerAction" onClick={() => window.print()} aria-label="Print or save as PDF" title="Print / Save PDF">↗</button>
-            <button className="headerAction" onClick={() => selectedNotebook && setNotebookEditorId(selectedNotebook.id)} aria-label="Notebook options" title="Notebook options">•••</button>
-            <button className={selectedNotebook?.favorite ? "headerAction favorite active" : "headerAction favorite"} onClick={() => selectedNotebook && toggleNotebookFavorite(selectedNotebook.id)} aria-label={selectedNotebook?.favorite ? "Remove notebook from favorites" : "Add notebook to favorites"} title="Favorite notebook">{selectedNotebook?.favorite ? "★" : "☆"}</button>
+            <button className="headerAction" onClick={exportNotebookMarkdown} aria-label="Export notebook as Markdown" title="Export Markdown"><AppIcon name="export" /></button>
+            <button className="headerAction" onClick={() => window.print()} aria-label="Print or save as PDF" title="Print / Save PDF"><AppIcon name="share" /></button>
+            <button className="headerAction" onClick={() => selectedNotebook && setNotebookEditorId(selectedNotebook.id)} aria-label="Notebook options" title="Notebook options"><AppIcon name="more" /></button>
+            <button className={selectedNotebook?.favorite ? "headerAction favorite active" : "headerAction favorite"} onClick={() => selectedNotebook && toggleNotebookFavorite(selectedNotebook.id)} aria-label={selectedNotebook?.favorite ? "Remove notebook from favorites" : "Add notebook to favorites"} title="Favorite notebook"><AppIcon name="favorite" /></button>
             <div className="pageCounter">{(selectedNotebook?.pages.findIndex((page) => page.id === selectedPage?.id) ?? 0) + 1}<span>/</span>{selectedNotebook?.pages.length ?? 1}</div>
-            <button className={detailsOpen ? "headerAction active" : "headerAction"} onClick={() => setDetailsOpen((value) => !value)} aria-label="Page details" title="Page details">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 10v6M12 7.5h.01"/></svg>
-            </button>
+            <button className={detailsOpen ? "headerAction active" : "headerAction"} onClick={() => setDetailsOpen((value) => !value)} aria-label="Page details" title="Page details"><AppIcon name="details" /></button>
             <button className="aiHeaderButton" onClick={() => setAiOpen((value) => !value)}><ToolIcon name="sparkles" /><span>AI</span></button>
           </div>
         </header>
 
         {pageNavigatorOpen && selectedNotebook && (
           <aside className="pageNavigator" aria-label="Notebook pages">
-            <div className="pageNavigatorHeader"><strong>Pages</strong><button onClick={createPage}>＋</button></div>
+            <div className="pageNavigatorHeader"><strong>Pages</strong><button onClick={createPage} aria-label="New page"><AppIcon name="plus" size={17} /></button></div>
             <div className="pageNavigatorList">
               {selectedNotebook.pages.map((page, index) => (
                 <div className={page.id === selectedPage?.id ? "pageNavigatorItem active" : "pageNavigatorItem"} key={page.id}>
